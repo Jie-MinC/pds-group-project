@@ -1,0 +1,86 @@
+---
+title: "Prediction On Resale Flat Prices"
+output: html_document
+---
+
+# Modeling
+
+```{r}
+df <- read.csv("../data/data_clean.csv")
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+colnames(df)
+```
+
+## Linear Regression
+
+```{r}
+# TODO
+```
+
+## Polynomial Regression
+
+```{r}
+# TODO
+```
+
+## Time Series Regression
+
+```{r}
+# TODO
+```
+
+## Lasso Regression (L1 Regularization)
+
+```{r}
+# TODO
+```
+
+## Ridge Regression (L2 Regularization)
+
+```{r}
+# TODO
+```
+
+## Elastic Net Regression
+
+```{r}
+# TODO
+```
+
+## Decision Tree Regression
+
+```{r}
+# TODO
+```
+
+## Random Forest Regression
+
+```{r}
+# TODO
+```
+
+## Support Vector Regression
+
+```{r}
+# TODO
+```
+
+# Model Selection
+
+```{r}
+# Compare all models
+# Choose the best model
+# Train the final model with full dataset
+# Save model
+```
+
