@@ -64,8 +64,8 @@ body <- dashboardBody(
             "tab_vis",
             
             ########### Intro
-            "Welcome! If you are planning to buy a flat in Singapore, ",
-            "then you are at the correct place.",
+            "Welcome! If your name is Amy or is planning to", 
+            "buy a flat in Singapore, then you are at the correct place.",
             "In this section, you will see some interesting figures and trends ",
             "on the resale flat prices in Singapore.",
             br(),
@@ -112,8 +112,8 @@ body <- dashboardBody(
             br(),
             
             ########### direct to predict
-            actionButton("i_vis_direct", label = "Click here!"),
-            "to proceed to find out the predicted price of your dream home!"
+            actionButton("i_vis_direct", label = "Click here"),
+            "to find out the estimated price of your dream home!"
         ), #close vis tabItem bracket
         
         ######################### Prediction tab        
@@ -204,10 +204,10 @@ body <- dashboardBody(
             "tab_doc",
             box(title = "Dataset", width = 12,
                 collapsible = FALSE,
-                "The prediction model is trained using", 
+                "The prediction model is trained using the", 
                 tags$a(href="https://data.gov.sg/dataset/resale-flat-prices",
                        "open dataset", target = "_blank"), 
-                "provided by Singapore Housing and Development Board"
+                "provided by Singapore Housing and Development Board."
                 
             ),# close dataset box bracket
             
