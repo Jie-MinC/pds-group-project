@@ -72,48 +72,65 @@ body <- dashboardBody(
             
             ########### Plottings
             tabBox(
-                height = 500, width = 12,
-                selected = "Test Distribution",
+                height = 450, width = 12,
+                selected = "Region",
                 
                 tabPanel("Floor Area", 
                     fluidRow(
                         column(3,
                             selectInput("i_vis_area_y", label = "Year",
-                                choices = list("1999","2000","2001")    
-                                )
+                                        choices = list("2018"= 2018,
+                                                       "2019"= 2019,
+                                                       "2020"= 2020)    
+                            ),
+                            "No plotting here yet."
                         ), #close control column
                         column(9,
-                               plotlyOutput("o_vis_area")
+                               #plotlyOutput("o_vis_area")
                         ) #close plot column
                     )# close fluidR bracket
                 ), #close floor area bracket
                 
-                tabPanel("Town",
-                ), #close town bracket
-                
-                tabPanel("Number of storey",
-                ), # close num storey bracket
-                
-                tabPanel("Test Distribution",
+                tabPanel("Region",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_dist_type", label = "Type",
-                                choices = list("Normal" = 'n',
-                                               "Uniform" = 'u') 
-                            )
+                            selectInput("i_vis_region_y", label = "Year",
+                                choices = list("2018"= 2018,
+                                               "2019"= 2019,
+                                               "2020"= 2020)    
+                            ),
+                            br(),
+                            "This is gg plot"
                         ), #close control column
                         column(9,
-                            plotlyOutput("o_vis_dist")
+                            plotOutput("o_vis_region")
                         ) #close plot column
-                    )# close fluidR bracket
-                ) # close test distribution bracket
+                    )# close fluidR bracket     
+                ), #close region bracket
+                
+                tabPanel("New Flat Model",
+                    fluidRow(
+                        column(3,
+                            selectInput("i_vis_nfm_y", label = "Year",
+                                choices = list("2018"= 2018,
+                                               "2019"= 2019,
+                                               "2020"= 2020)    
+                                ),
+                            br(),
+                            "This is plotly plot"
+                        ), #close control column
+                        column(9,
+                            plotlyOutput("o_vis_nfm")
+                        ) #close plot column
+                    )# close fluidR bracket          
+                ), # close nfm bracket
                 
             ), #close plotting tabbox bracket
             br(),
             
             ########### direct to predict
             actionButton("i_vis_direct", label = "Click here"),
-            "to find out the estimated price of your dream home!"
+            "to find out the estimated price for your dream home!"
         ), #close vis tabItem bracket
         
         ######################### Prediction tab        

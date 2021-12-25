@@ -11,38 +11,16 @@ library(shinyjs)
 library(dplyr)
 library(ggplot2)
 library(plotly)
+library(readr)
+
 
 
 
 
 # Inititation -------------------------------------------------------------
-#load dataset etc
-numobs<- 800
-
-#normal dataframe
-numvar<-rnorm(numobs, mean = 0, sd=1)
-groupvar<- sample(
-    c("A","B","C"), size=numobs, replace = TRUE
-)
-normdf<-data.frame(groupvar, numvar) %>% 
-    setNames(c("group","value"))
-
-normdistgg<- normdf %>% ggplot(aes(x=value, fill=group)) + theme_bw() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    geom_density(alpha=0.5)
-
-
-#uniform dataframe
-numvar<-runif(numobs, min = -10, max=10)
-groupvar<- sample(
-    c("A","B","C"), size=numobs, replace = TRUE
-)
-unifdf<-data.frame(groupvar, numvar) %>% 
-    setNames(c("group","value"))
-
-unifdistgg<- unifdf %>% ggplot(aes(x=value, fill=group)) + theme_bw() +
-    theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-    geom_density(alpha=0.5)
+# load cleaned dataset from github
+ghurl<- 'https://media.githubusercontent.com/media/yongkokkhuen/pds-group-project/main/data/data_clean.csv'
+cleancsv<- data.frame(read_csv(ghurl))
 
 # Shiny Server ------------------------------------------------------------
 shinyServer(function(input, output, session) {
@@ -50,14 +28,37 @@ shinyServer(function(input, output, session) {
     ################ shiny js
     
     ################ output in tab_vis
-    output$o_vis_dist<-renderPlotly({
-        baseplot<- switch(input$i_vis_dist_type,
-            'n' = normdistgg,
-            'u' = unifdistgg
-        )
+    
+    output$o_vis_area<-renderPlotly({
+        areaplot<- cleancsv %>% 
+            filter(year %in% input$i_vis_area_y) %>%
+            ggplot(aes(x=floor_area_sqm, y=resale_price, color = region)) +
+            geom_point() +
+            scale_color_brewer(type = "qual", palette = 5)
         
-        ggplotly(baseplot)
+        #ggplotly(areaplot)
     })
+    
+    output$o_vis_region<-renderPlot({
+        cleancsv %>% filter(year %in% input$i_vis_region_y) %>%
+            ggplot(aes(x=region,y=resale_price, fill = region)) + theme_bw() +
+            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+            geom_violin() + geom_boxplot(width = 0.1) + theme(legend.position="none")+
+            scale_color_brewer(type = "qual", palette = 5)
+        
+        #ggplotly(regplot)
+    })
+    
+    output$o_vis_nfm<-renderPlotly({
+        nfmplot<- cleancsv %>% filter(year %in% input$i_vis_nfm_y) %>%
+            #group_by(new_flat_model)
+            ggplot(aes(x=resale_price, fill = new_flat_model)) + theme_bw() +
+            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
+            geom_density(alpha=0.5)  
+        
+        ggplotly(nfmplot)
+    })
+    
     
     observeEvent(input$i_vis_direct, {
         updateTabItems(session,'i_sidetabs',"tab_pred")
