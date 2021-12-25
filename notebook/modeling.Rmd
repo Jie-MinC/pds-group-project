@@ -10,7 +10,10 @@ library(dplyr)
 ```
 
 ```{r}
-df <- read.csv("../data/data_clean.csv")
+df <- read.csv("../data/data_clean.csv", stringsAsFactors = TRUE)
+df$year <- factor(df$year)
+df$month <- factor(df$month)
+df$block <- factor(df$block)
 ```
 
 ```{r}
