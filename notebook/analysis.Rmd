@@ -868,7 +868,7 @@ str(data)
 ``` 
   * drop columns that are useless for prediction
 ```{r}
-data <- data[,-which(names(data) %in% c("lease_commence_date","int_year","floor_area_sqm","floor_area_sqm_bins","resale_price_bins","used_lease"))]
+data <- data[,-which(names(data) %in% c("lease_commence_date","int_year","floor_area_sqm_bins","resale_price_bins","used_lease"))]
 
 ```  
 
