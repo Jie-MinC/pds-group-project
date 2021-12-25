@@ -1,5 +1,5 @@
 ---
-title: "Prediction On Resale Flat Prices"
+title: "Prediction On Resale Flat Price"
 output: html_document
 ---
 
@@ -24,6 +24,7 @@ library(tidyverse)
 library(summarytools)
 library(car)
 library(dlookr)
+library(ggplot2)
 ```
 
 ***
@@ -32,9 +33,6 @@ library(dlookr)
 ## Read CSV
 
 ```{r}
-data_1990_1999 <- read.csv("../data/resale-flat-prices-based-on-approval-date-1990-1999.csv", quote = "", header = TRUE, sep = ",")
-data_2000_2012 <- read.csv("../data/resale-flat-prices-based-on-approval-date-2000-feb-2012.csv", header = TRUE, sep = ",")
-data_2012_2014 <- read.csv("../data/resale-flat-prices-based-on-registration-date-from-mar-2012-to-dec-2014.csv", header = TRUE, sep = ",")
 data_2015_2016 <- read.csv("../data/resale-flat-prices-based-on-registration-date-from-jan-2015-to-dec-2016.csv", header = TRUE, sep = ",")
 data_2017 <- read.csv("../data/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv", header = TRUE, sep = ",")
 ```
@@ -42,47 +40,19 @@ data_2017 <- read.csv("../data/resale-flat-prices-based-on-registration-date-fro
 ## Data Columns Exploration
 
 ```{r}
-print("data_1990_1999:")
-str(data_1990_1999)
-print("data_2000_2012:")
-str(data_2000_2012)
 print("data_2015_2016:")
 str(data_2015_2016)
 print("data_2017:")
 str(data_2017)
-print("data_2012_2014:")
-str(data_2012_2014)
 ```
-
-These datasets has 10 variables:
-<br>1. data_1990_1999
-<br>2. data_2000_2012
-<br>3. data_2012_2014
-
-While the remaining datasets has 11 variables:
-<br>1. data_2015_2016
-<br>2. data_2017
-
-The additional variable is remaining_lease, this variable only available in data from year 2015 onwards
-
-Add new column "remaining_lease" for that 3 datasets and assign "NA"
-```{r}
-data_1990_1999$remaining_lease <- NA
-data_2000_2012$remaining_lease <- NA
-data_2012_2014$remaining_lease <- NA
-```
-
 ## Data Integration
 
 ```{r}
-data <- rbind(data_1990_1999, data_2000_2012)
-data <- rbind(data, data_2015_2016)
-data <- rbind(data, data_2017)
-data <- rbind(data, data_2012_2014)
+data <- rbind(data_2015_2016, data_2017)
 str(data)
 ```
 
-The merged dataset contains total 861,505 observations (flat resales transaction) and 11 variables.
+The merged dataset contains total 152,455 observations (flat resales transaction) and 11 variables.
 
 ## Data Exploration To Detect Incorrect Data, Handling Incorrect Data, and Transforming Data
 
@@ -125,33 +95,28 @@ sort(summary(data$month))
   * there's no missing value
   * exploration of year by plotting
 ```{r}
-barplot(table(data$year), ylim=c(0,60000), las = 2)
+barplot(table(data$year), ylim=c(0,30000), las = 2)
 
 p <- ggplot(data, aes(x = fct_infreq(year), fill = fct_infreq(year))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("year")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 60000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 30000))
 ``` 
-
-  * the highest transaction records was in year 1999, more than 50,000 rows out of total 861,505 rows
-  * the lowest transaction records was in year 1990, less than 15,000 rows
-  * there is a significant spike of transaction records in year 1998 then a significant drop in year 2000
-  * what is the distribution type of this statistic? https://medium.com/data-science-in-your-pocket/various-data-distributions-in-statistics-362dc92558db
 
   * exploration of month by plotting
 ```{r}
-barplot(table(data$month), ylim=c(0,80000), las = 2)
+barplot(table(data$month), ylim=c(0,20000), las = 2)
 
 p <- ggplot(data, aes(x = fct_infreq(month), fill = fct_infreq(month))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("month")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 80000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 20000))
 ``` 
 
   * uniform distribution type
-  * the transaction records in every month are about the same, ranges from 60,000 to 80,000
+  * the transaction records in every month are about the same, ranges from 9,000 to 15,000
   * July has the highest transaction records
   * February has the lowest transaction records
   
@@ -180,7 +145,7 @@ p <- ggplot(data, aes(x = fct_infreq(town), fill = fct_infreq(town))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("town")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 80000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 15000))
 
 # Zoom in to town with frequency < 10,000
 data_filter <- data %>% 
@@ -195,14 +160,14 @@ p + coord_flip() + scale_y_continuous(limit = c(0, 8000))
 
 ``` 
 
-  * TAMPINES has the highest transaction records, more than 70,000 rows out of total 861,505 rows
-  * LIM CHU KANG has the lowest transaction records, less than 2,500 rows
-  * both LIM CHU KANG and BUKIT TIMAH have less than 2,500 transaction records, are these outliers?
+  * SENGKANG  has the highest transaction records, more than 10,000 rows
+  * BUKIT TIMAH has the lowest transaction records, less than 1,000 rows
   
-  * classify towns into region (based on Wei Wen's file)
+  * classify towns into region (refer to https://www.mappr.co/counties/regions-of-singapore/)
+  * classify BUKIT TIMAH as central region (refer to https://en.wikipedia.org/wiki/Bukit_Timah)
 ```{r}
 data$region <- ifelse (data$town %in% c("BUKIT MERAH","BUKIT TIMAH","GEYLANG","TOA PAYOH",
-                                        "BISHAN","KALLANG/WHAMPOA","MARINE PARADE"), "Central",
+                                        "BISHAN","KALLANG/WHAMPOA","MARINE PARADE", "CENTRAL AREA", "QUEENSTOWN"), "Central",
                        ifelse (data$town %in% c("TAMPINES","BEDOK","PASIR RIS"), "East",
                                ifelse (data$town %in% c("LIM CHU KANG","SEMBAWANG","WOODLANDS","YISHUN"), "North",
                                        ifelse (data$town %in% c("ANG MO KIO","HOUGANG","PUNGGOL","SENGKANG",
@@ -210,7 +175,7 @@ data$region <- ifelse (data$town %in% c("BUKIT MERAH","BUKIT TIMAH","GEYLANG","T
                                                ifelse (data$town %in% c("BUKIT BATOK","BUKIT PANJANG",
                                                                         "CHOA CHU KANG","CLEMENTI",
                                                                         "JURONG EAST","JURONG WEST"), "West",
-                                                       "Suburb")))))
+                                                       as.character(data$town))))))
                     
 head(data)
 head(data$region)
@@ -229,12 +194,12 @@ p <- ggplot(data, aes(x = fct_infreq(region), fill = fct_infreq(region))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("region")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 250000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 45000))
 
 ``` 
 
-  * WEST has the highest transaction records, more than 200,000 rows out of total 861,505 rows
-  * Suburb has the lowest transaction records, less than 50,000 rows
+  * North-East has the highest transaction records, nearly 40,000 rows
+  * East has the lowest transaction records, less than 25,000 rows
 
 ### 3. flat_type
 
@@ -250,15 +215,8 @@ data %>% distinct(flat_type)
 data %>% summarise(na = sum(is.na(flat_type)))
 ```
   * there's no missing value
-  * however, incorrect data spotted: MULTI GENERATION and MULTI-GENERATION
-  * standardize to "MULTI-GENERATION"
   * convert to factor
 ```{r}
-data <- data %>%
-  mutate(flat_type = replace(flat_type, flat_type ==  "MULTI GENERATION", "MULTI-GENERATION"))
-
-data %>% distinct(flat_type)
-
 data$flat_type <- as.factor(data$flat_type)
 
 str(data$flat_type)
@@ -271,23 +229,27 @@ p <- ggplot(data, aes(x = fct_infreq(flat_type), fill = fct_infreq(flat_type))) 
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("flat_type")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 350000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 70000))
 
-# Zoom in to flat type with frequency < 5,000
+# Zoom in
 data_filter <- data %>% 
   group_by(flat_type) %>%
-  filter(n() < 5000)
+  filter(n() < 100)
 
 p <- ggplot(data_filter, aes(x = fct_infreq(flat_type), fill = fct_infreq(flat_type))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("flat_type")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 100))
 ``` 
 
-  * 4 ROOM type HDB has the highest transaction records, more than 300,000 rows out of total 861,505 rows
-  * MULTI-GENERATION type HDB has the lowest transaction records, less than 1,000 rows
-  * both MULTI-GENERATION and 1 ROOM type HDB have less than 1,500 transaction records, it is logical as not much HDB in these two types
+  * 4 ROOM type HDB has the highest transaction records, more than 60,000 rows
+  * 1 ROOM type HDB has the lowest transaction records, less than 100 rows
+  * both MULTI-GENERATION and 1 ROOM type HDB have less than 100 transaction records, it is logical as not much HDB in these two types
+
+  * reference: https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats
+  * MULTI-GENERATION:
+  * Eligible multi-generation families living under one roof in a 3Gen flat can delight in closer family ties. With 2 bedrooms with attached bathrooms, and 2 other bedrooms, it easily supports the needs of larger households.
 
 ### 4. block
 
@@ -334,7 +296,49 @@ p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("block")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 1000))
+
+# BOTTOM 10 block with lowest transactions
+data_filter <- data %>% 
+  filter(block %in% btm10$block)
+
+p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
+  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
+  xlab("block")
+
+p + coord_flip() + scale_y_continuous(limit = c(0, 5))
+
+``` 
+
+  * remove the alphabet in block number to reduce the number of unique value
+
+```{r}
+
+data$block <- gsub("[^0-9.-]", "", data$block)
+head(data$block)
+tail(data$block)
+```
+
+  * exploration by plotting
+  * select blocks of top 10 highest transaction records and top 10 lowest transaction records
+```{r}
+groupby_block <- data  %>% 
+     group_by(block) %>%
+     summarise(n = n()) %>%
+     arrange(n, decreasing = TRUE)
+
+btm10 <- head(groupby_block,10)
+top10 <- tail(groupby_block,10)
+
+# TOP 10 block with highest transactions
+data_filter <- data %>% 
+  filter(block %in% top10$block)
+
+p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
+  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
+  xlab("block")
+
+p + coord_flip() + scale_y_continuous(limit = c(0, 1000))
 
 # BOTTOM 10 block with lowest transactions
 data_filter <- data %>% 
@@ -347,6 +351,7 @@ p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
 p + coord_flip() + scale_y_continuous(limit = c(0, 10))
 
 ``` 
+
 
 ### 5. street_name
 ```{r}
@@ -392,7 +397,7 @@ p <- ggplot(data_filter, aes(x = fct_infreq(street_name), fill = fct_infreq(stre
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("street_name")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 20000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 3000))
 
 # BOTTOM 10 street_name with lowest transactions
 data_filter <- data %>% 
@@ -402,7 +407,7 @@ p <- ggplot(data_filter, aes(x = fct_infreq(street_name), fill = fct_infreq(stre
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("street_name")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 25))
+p + coord_flip() + scale_y_continuous(limit = c(0, 20))
 
 ``` 
 
@@ -418,45 +423,23 @@ unique(sort(data$storey_range))
 data %>% summarise(na = sum(is.na(storey_range)))
 ```
   * there's no missing value
-  * split into two columns - storey_range_from and storey_range_to
-  * add new column - storey_range_mean (mean of storey_range_from and storey_range_to)
-  * convert new columns to int
   * convert storey_range to factor
 ```{r}
-data <- data %>% separate(storey_range, c("storey_range_from","storey_range_to"), " TO ", remove = FALSE)
-
-unique(sort(data$storey_range_from))
-unique(sort(data$storey_range_to))
-
-data$storey_range_from <- as.integer(data$storey_range_from)
-data$storey_range_to <- as.integer(data$storey_range_to)
-
-#data$storey_range_mean <- pmin(data$storey_range_from, data$storey_range_to)
-data$storey_range_mean <- (data$storey_range_from + data$storey_range_to) / 2
-
-head(data)
-
-unique(sort(data$storey_range_mean))
-
-str(data$storey_range_from)
-str(data$storey_range_to)
-str(data$storey_range_mean)
 
 data$storey_range <- as.factor(data$storey_range)
 sort(summary(data$storey_range))
 ```
   * exploration by plotting
 ```{r}
-barplot(table(data$storey_range), ylim=c(0,250000), las = 2)
-#barplot(table(data$storey_range_mean), ylim=c(0,250000), las = 2)
+barplot(table(data$storey_range), ylim=c(0,50000), las = 2)
 
 p <- ggplot(data, aes(x = fct_infreq(storey_range), fill = fct_infreq(storey_range))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("storey_range")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 250000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 50000))
 
-# Zoom in to storey_range with frequency < 5,000
+# Zoom in
 data_filter <- data %>% 
   group_by(storey_range) %>%
   filter(n() < 3000)
@@ -468,15 +451,10 @@ p <- ggplot(data_filter, aes(x = fct_infreq(storey_range), fill = fct_infreq(sto
 p + coord_flip() + scale_y_continuous(limit = c(0, 3000))
 ```
 
-  * Storey range of 04 TO 06 has the highest transaction records, more than 200,000 rows out of total 861,505 rows
-  * Storey range of 31 TO 35 has the lowest transaction records, less than 500 rows
+  * Storey range of 04 TO 06 has the highest transaction records, more than 35,000 rows
+  * Storey range of 49 TO 51 has the lowest transaction records, less than 500 rows
   * Most of the HDB are <= 12 floors
-  * There is a significant low transaction records for 01 TO 05 (mean = 3), 06 TO 10 (mean = 8), and 11 TO 15 (mean = 13), are these outliers?
-  * The floor numbers are overlapping, how can we handle this? Use mean value?
 
-```{r}
-barplot(table(data$storey_range_mean), ylim=c(0,250000), las = 2)
-```
   
 ### 7. floor_area_sqm
 
@@ -491,7 +469,7 @@ summary(data$floor_area_sqm)
   * there's no missing value
   * exploration by plotting
 ```{r}
-barplot(table(data$floor_area_sqm), ylim=c(0,70000), las = 2)
+barplot(table(data$floor_area_sqm), ylim=c(0,10000), las = 2)
 
 data_plot <- data
 
@@ -500,18 +478,18 @@ p <- ggplot(data_plot, aes(x = fct_infreq(floor_area_sqm), fill = fct_infreq(flo
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("floor_area_sqm")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 350000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 10000))
 
-# Zoom in to flat type with frequency < 5,000
+# Zoom in
 data_filter <- data_plot %>% 
   group_by(floor_area_sqm) %>%
-  filter(n() < 5000)
+  filter(n() < 20)
 
 p <- ggplot(data_filter, aes(x = fct_infreq(floor_area_sqm), fill = fct_infreq(floor_area_sqm))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("floor_area_sqm")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 20))
 ```
   
   * binning
@@ -519,8 +497,8 @@ p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
 summary(data$floor_area_sqm)
 max(data$floor_area_sqm) -  min(data$floor_area_sqm)
 
-lower_boundary <- c(seq(27, 287, by=20))
-upper_boundary <- c(seq(47, 307, by=20))
+lower_boundary <- c(seq(30, 270, by=20))
+upper_boundary <- c(seq(50, 300, by=20))
 lower_boundary
 upper_boundary
 
@@ -528,8 +506,7 @@ upper_boundary
 bin_label <- c(paste(paste(lower_boundary, "-"),upper_boundary))
 bin_label
 
-# range 279 divided into 14 bins - around 20 values in 1 bin
-data$floor_area_sqm_bins <- cut(data$floor_area_sqm, breaks=c(seq(27, 307, by=20)), labels=bin_label)
+data$floor_area_sqm_bins <- cut(data$floor_area_sqm, breaks=c(seq(30, 300, by=20)), labels=bin_label)
 
 data %>% select(floor_area_sqm, floor_area_sqm_bins) %>% head()
 
@@ -540,15 +517,15 @@ data %>% filter(is.na(floor_area_sqm_bins)) %>% select(floor_area_sqm, floor_are
 ```
 
 ```{r}
-barplot(table(data$floor_area_sqm_bins), ylim=c(0,300000), las = 2)
+barplot(table(data$floor_area_sqm_bins), ylim=c(0,60000), las = 2)
 
 p <- ggplot(data, aes(x = fct_infreq(floor_area_sqm_bins), fill = fct_infreq(floor_area_sqm_bins))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("floor_area_sqm")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 300000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 60000))
 
-# Zoom in to flat type with frequency < 5,000
+# Zoom in to
 data_filter <- data %>% 
   group_by(floor_area_sqm_bins) %>%
   filter(n() < 50)
@@ -560,11 +537,25 @@ p <- ggplot(data_filter, aes(x = fct_infreq(floor_area_sqm_bins), fill = fct_inf
 p + coord_flip() + scale_y_continuous(limit = c(0, 50))
 ```
 
-  * explore whether the min (28) and max (307) floor area in sqm are logical
-  * Floor area (sqm) from 87-107 has the highest transaction records, more than 250,000 rows out of total 861,505 rows
-  * Floor area (sqm) from 287-307 has the lowest transaction records, less than 5 rows
-  * Most of the HDB are <= 12 floors
-  * There are 5 bins have < 50 transaction records, are these outliers?
+  * Floor area (sqm) from 90-110 has the highest transaction records, more than 50,000 rows
+  * Floor area (sqm) from 250-290 has the lowest transaction records, less than 5 rows
+  * Most of the HDB has floor area ranges from 50-150 sqm
+  
+  * Create new column - price per sqm
+```{r}
+data$price_per_sqm <- round(data$resale_price / data$floor_area_sqm, 2)
+head(data)
+tail(data)
+str(data$price_per_sqm)
+
+```
+
+  * exploration by plotting
+```{r}
+barplot(table(data$price_per_sqm), ylim=c(0,1500), las = 2)
+
+```  
+  
   
 ### 8. flat_model
 ```{r}
@@ -578,13 +569,8 @@ unique(sort(data$flat_model))
 data %>% summarise(na = sum(is.na(flat_model)))
 ```
   * there's no missing value
-  * however spotted same flat_model in both lowercase and uppercase
-  * update all to uppercase
   * convert to factor
 ```{r}
-data$flat_model <- toupper(data$flat_model)
-unique(sort(data$flat_model))
-
 data$flat_model <- as.factor(data$flat_model)
 
 str(data$flat_model)
@@ -596,9 +582,9 @@ p <- ggplot(data, aes(x = fct_infreq(flat_model), fill = fct_infreq(flat_model))
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("flat_model")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 250000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 60000))
 
-# Zoom in to flat_model with frequency < 5,000
+# Zoom in
 data_filter <- data %>%
   group_by(flat_model) %>%
   filter(n() < 3000)
@@ -610,15 +596,80 @@ p <- ggplot(data_filter, aes(x = fct_infreq(flat_model), fill = fct_infreq(flat_
 p + coord_flip() + scale_y_continuous(limit = c(0, 3000))
 ```
 
-  * regroup flat model (based on Wei Wen's file)
 ```{r}
-data$new_flat_model <- ifelse (data$flat_model %in% c("2-ROOM","APARTMENT","ADJOINED FLAT","DBSS",
-                                        "IMPROVED","MODEL A","MODEL A2"), "Flat",
-                       ifelse (data$flat_model %in% c("MAISONETTE","IMPROVED-MAISONETTE",
-                                                      "MODEL A-MAISONETTE"), "Maisonette",
-                               ifelse (grepl("PREMIUM", data$flat_model), "Premium",
-                                       ifelse (data$flat_model %in% c("TERRACE","TYPE S1","TYPE S2"), "Terrace",
-                                                       "Others"))))
+sort(unique(data$flat_model))
+```
+  * Definition of flat model:
+    1. 2-ROOM
+      * A 2-room flexi HDB flat is a compact living space which is ideal for singles or young couples. They usually consist of 1 bedroom and 1 bathroom.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    2. ADJOINED FLAT
+      * Adjoined flats are two flats converted into a single property by homeowners. They usually consist of 5 or 4 bedrooms.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    3. APARTMENT
+    
+    4. DBSS
+      * Design, Build and Sell Scheme (DBSS) flat offer extras in terms of designs and finishes.
+      * https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats
+    5. IMPROVED
+      * Improved flats (1/2/3/4-room) were introduced in 1966, the 3/4-room having separate WC and shower, they also featured void decks.
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    6. IMPROVED-MAISONETTE
+    
+    7. MAISONETTE
+    
+    8. MODEL A
+      * In 1981 were introduced Model A flats: 3-Room (75 sqm), 4-Room (105 sqm), 5-Room (135 sqm), 5-Room Maisonette (139 sqm)
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    9. MODEL A-MAISONETTE
+      * Model A Maisonettes are HDB flats that have two separate levels. They usually consist of 3 bedrooms and 3 bathrooms. 
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    10. MODEL A2
+      * 1994-1998 slab block with 4-Room Model A (100 sqm) and 5-Room Improved (120-123 sqm), some blocks have some smaller units named 4-Room Model A2 (90 sqm), some have different corners with 4-Room and 5-Room units, others have a wing with 2 units of 5-Room
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    11. MULTI GENERATION
+      * Multi-Generation flats can only be bought by multi-generational families, comprising of a married or courting couple, and one set of parents.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    12. NEW GENERATION
+      * In 1975 were completed the first New Generation flats: 3-Room (67 / 82 sqm) and 4-Room (92 sqm).
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    13. PREMIUM APARTMENT
+      * The Executive Apartment is an HDB flat which comes with an additional space that can be used as a study room or a living room. In addition to this, some of the executive apartments even come with a balcony space.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    14. PREMIUM APARTMENT LOFT
+      * HDB loft units are units that come with two storeys and a high ceiling. The living area is typically much bigger than most HDB units. For those who are familiar with executive maisonettes, HDB loft units are the newer and more 'evolved' version of maisonettes.
+      * https://www.propertyguru.com.sg/property-guides/hdb-loft-units-2-35594
+    15. PREMIUM MAISONETTE
+      * Executive Maisonettes are the more premium version of Model A Maisonettes. These units are no longer being built after being replaced by the Executive Condominium (EC) scheme in 1995.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    16. SIMPLIFIED
+      * In 1984 were introduced Simplified flats, 3-Room (64 sqm), 4-Room (84 sqm).
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    17. STANDARD
+      * Standard flats (1/2/3/4-room) had WC and shower in same room.
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    18. TERRACE
+      * Terrace HDB houses were first built in the 1960s when the Housing and Development Board (HDB) hadn't come into the picture yet. These homes were handled by the Singapore Improvement Trust.
+      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
+    19. TYPE S1
+      * Pinnacle @ Duxton, the first 50-storey public housing complex, was launched via BTO in May 2004 and got first residents in December 2009, for HDB anniversary of 50 years in February 2010. Composed by 7 blocks × 44 residential floors × 6 units per floor = 1848 units, it was the biggest BTO project to date. It included 2 levels of skybridges, 2 flat types (S1 4-Room 90-93 sqm and S2 5-room 103-106 sqm), different combinations of bay windows, balconies and planters create 35 distinct flat layouts.
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+    20. TYPE S2
+      * Pinnacle @ Duxton, the first 50-storey public housing complex, was launched via BTO in May 2004 and got first residents in December 2009, for HDB anniversary of 50 years in February 2010. Composed by 7 blocks × 44 residential floors × 6 units per floor = 1848 units, it was the biggest BTO project to date. It included 2 levels of skybridges, 2 flat types (S1 4-Room 90-93 sqm and S2 5-room 103-106 sqm), different combinations of bay windows, balconies and planters create 35 distinct flat layouts.
+      * https://www.teoalida.com/singapore/hdbfloorplans/
+      
+  * Types below are classified as uncommon flat model (refer to https://blog.carousell.com/property/hdb-flat-types-singapore/):
+    1. Maisonette
+    2. Terrace
+    3. Adjoined flat
+    
+  * regroup flat model based on findings above
+```{r}
+data$new_flat_model <- ifelse (data$flat_model %in% c("Improved","Model A","Model A2", "New Generation", "Simplified", "Standard",
+                                                      "Type S1", "Type S2"), "Flat",
+                       ifelse (grepl("Apartment", data$flat_model), "Apartment",
+                               ifelse (grepl("Maisonette", data$flat_model), "Maisonette",
+                                                       as.character(data$flat_model))))
                     
 head(data)
 head(data$new_flat_model)
@@ -637,22 +688,22 @@ p <- ggplot(data, aes(x = fct_infreq(new_flat_model), fill = fct_infreq(new_flat
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("new_flat_model")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 550000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 150000))
 
-# Zoom in to new_flat_model with frequency < 5,000
+# Zoom in
 data_filter <- data %>%
   group_by(new_flat_model) %>%
-  filter(n() < 5000)
+  filter(n() < 500)
 
 p <- ggplot(data_filter, aes(x = fct_infreq(new_flat_model), fill = fct_infreq(new_flat_model))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("new_flat_model")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 500))
 ```
 
-  * Flat type HDB has the highest transaction records, more than 500,000 rows out of total 861,505 rows
-  * Terrace type HDB has the lowest transaction records, less than 1,500 rows
+  * Flat type HDB has the highest transaction records, more than 100,000 rows
+  * 2-ROOM type HDB has the lowest transaction records, less than 50 rows
 
 ### 9. lease_commence_date
 
@@ -686,7 +737,7 @@ summary(data$resale_price)
   * there's no missing value
   * exploration by plotting
 ```{r}
-barplot(table(data$resale_price), ylim=c(0,8000), las = 2)
+barplot(table(data$resale_price), ylim=c(0,3000), las = 2)
 
 ```
   
@@ -695,15 +746,15 @@ barplot(table(data$resale_price), ylim=c(0,8000), las = 2)
 summary(data$resale_price)
 max(data$resale_price) -  min(data$resale_price)
 
-lower_boundary <- c(seq(4000, 1224400, by=135600))
-upper_boundary <- c(seq(139600, 1360000, by=135600))
+lower_boundary <- c(seq(79000, 1360000, by=61000))
+upper_boundary <- c(seq(140000, 1421000, by=61000))
 lower_boundary
 upper_boundary
 
 bin_label <- c(paste(paste(lower_boundary, "-"),upper_boundary))
 bin_label
 
-data$resale_price_bins <- cut(data$resale_price, breaks=c(seq(4000, 1360000, by=135600)), labels=bin_label)
+data$resale_price_bins <- cut(data$resale_price, breaks=c(seq(79000, 1421000, by=61000)), labels=bin_label)
  
 data %>% select(resale_price, resale_price_bins) %>% head()
  
@@ -716,30 +767,29 @@ data %>% filter(is.na(resale_price_bins)) %>% select(resale_price, resale_price_
 
   * exploration by plotting
 ```{r}
-barplot(table(data$resale_price_bins), ylim=c(0,350000), las = 2)
+barplot(table(data$resale_price_bins), ylim=c(0,35000), las = 2)
 
 p <- ggplot(data, aes(x = fct_infreq(resale_price_bins), fill = fct_infreq(resale_price_bins))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("resale_price")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 350000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 35000))
 
-# Zoom in to resale_price with frequency < 5,000
+# Zoom in
 data_filter <- data %>%
   group_by(resale_price_bins) %>%
-  filter(n() < 5000)
+  filter(n() < 500)
 
 p <- ggplot(data_filter, aes(x = fct_infreq(resale_price_bins), fill = fct_infreq(resale_price_bins))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("resale_price")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 5000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 500))
 ```
 
-  * Resale price ranges from 139600-275200 has the highest transaction records, more than 300,000 rows out of total 861,505 rows
-  * Resale price ranges from 1224400-1360000 has the lowest transaction records, less than 500 rows
-
-  * any outliers?
+  * Resale price ranges from 384000-445000 has the highest transaction records, more than 30,000 rows
+  * Resale price ranges from 1299000-1360000 has the lowest transaction records, less than 50 rows
+  * Most of the HDB resale with price ranges from 262000-567000
 
 ```{r}
 boxplot(data$resale_price ~ data$year)
@@ -750,19 +800,19 @@ boxplot(data$resale_price ~ data$floor_area_sqm_bins)
   * correlation between two variables
   
 ```{r}
-plot(data$region ~ data$resale_price)
-
-library(ggplot2)
 ggplot(data) +
   aes(x = resale_price, y = floor_area_sqm_bins, colour = region) +
+  geom_point() +
+  scale_color_hue()
+
+ggplot(data) +
+  aes(x = resale_price, y = price_per_sqm, colour = region) +
   geom_point() +
   scale_color_hue()
 ```
 
 ### 11. remaining_lease
-  * transform to month value
-  * for NA, calculate the used lease using transaction year and lease commence date then subtract from total 99 lease year
-  
+
 ```{r}
 head(data$remaining_lease)
 tail(data$remaining_lease)
@@ -772,32 +822,20 @@ data %>% summarise(na = sum(is.na(remaining_lease)))
 summary(data$remaining_lease)
 
 ```
-  * there's 709050 missing data, calculate the remaining lease using transaction year and lease commence date
+  * standardize to years
 ```{r}
-data_test <- data
-data_test$used_lease <- data_test$int_year - data_test$lease_commence_date
+data$used_lease <- data$int_year - data$lease_commence_date
 
-data_test$remaining_lease <- as.integer(99 - data_test$used_lease)
-str(data_test$remaining_lease)
-data_test %>% summarise(na = sum(is.na(remaining_lease)))
-summary(data_test$remaining_lease)
+data$remaining_lease <- as.integer(99 - data$used_lease)
 
-data_test %>% filter(remaining_lease > 99) %>% select (int_year, used_lease, lease_commence_date, remaining_lease)
-data_test %>% summarise(count = sum(remaining_lease > 99))
-
-# update remaining lease to the actual df
-data$remaining_lease <- data_test$remaining_lease
-
-# drop these 51 records
-data <- subset(data,remaining_lease <= 99)
-
+data %>% summarise(na = sum(is.na(remaining_lease)))
 summary(data$remaining_lease)
 str(data$remaining_lease)
 
 ```
   * exploration by plotting
 ```{r}
-barplot(table(data$remaining_lease), ylim=c(0,50000), las = 2)
+barplot(table(data$remaining_lease), ylim=c(0,10000), las = 2)
 
 data_plot <- data
 data_plot$remaining_lease <- as.factor(data_plot$remaining_lease)
@@ -805,29 +843,32 @@ p <- ggplot(data_plot, aes(x = fct_infreq(remaining_lease), fill = fct_infreq(re
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("remaining_lease")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 50000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 10000))
 
-# Zoom in to remaining_lease with frequency < 5,000
+# Zoom in 
 data_filter <- data_plot %>% 
   group_by(remaining_lease) %>%
-  filter(n() < 1000)
+  filter(n() < 100)
 
 p <- ggplot(data_filter, aes(x = fct_infreq(remaining_lease), fill = fct_infreq(remaining_lease))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
   xlab("remaining_lease")
 
-p + coord_flip() + scale_y_continuous(limit = c(0, 1000))
+p + coord_flip() + scale_y_continuous(limit = c(0, 100))
 ```
   
-  * 94 and 95 remaining lease year has the highest transaction records, more than 45,000 rows out of total 861,505 rows
-  * 44 remaining lease year has the lowest transaction records, less than 100 rows
-  * remaining lease year > 95 has very low transaction records, should be due to the restriction to sell the HDB if purchased less than N years
+  * 95 remaining lease year has the highest transaction records, more than 8,000 rows
+  * 44 remaining lease year has the lowest transaction records, less than 20 rows
+  * remaining lease year > 96 has very low transaction records, should be due to the restriction to sell the HDB if purchased less than N years
 
 
 ### Drop Columns
-  * drop columns that are useless for our objective
 ```{r}
-data <- data[,-which(names(data) %in% c("lease_commence_date","int_year"))]
+str(data)
+``` 
+  * drop columns that are useless for prediction
+```{r}
+data <- data[,-which(names(data) %in% c("lease_commence_date","int_year","floor_area_sqm","floor_area_sqm_bins","resale_price_bins","used_lease"))]
 
 ```  
 
