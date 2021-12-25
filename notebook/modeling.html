@@ -170,6 +170,15 @@ pre code {
 
 <div id="modeling" class="section level1">
 <h1>Modeling</h1>
+<pre class="r"><code>library(dplyr)</code></pre>
+<pre><code>## 
+## Attaching package: &#39;dplyr&#39;</code></pre>
+<pre><code>## The following objects are masked from &#39;package:stats&#39;:
+## 
+##     filter, lag</code></pre>
+<pre><code>## The following objects are masked from &#39;package:base&#39;:
+## 
+##     intersect, setdiff, setequal, union</code></pre>
 <pre class="r"><code>df &lt;- read.csv(&quot;../data/data_clean.csv&quot;)</code></pre>
 <pre class="r"><code>head(df)</code></pre>
 <pre><code>##   year month       town flat_type block      street_name storey_range
@@ -227,6 +236,73 @@ pre code {
 ## [10] &quot;floor_area_sqm&quot;      &quot;flat_model&quot;          &quot;resale_price&quot;       
 ## [13] &quot;remaining_lease&quot;     &quot;region&quot;              &quot;storey_range_mean&quot;  
 ## [16] &quot;floor_area_sqm_bins&quot; &quot;new_flat_model&quot;      &quot;resale_price_bins&quot;</code></pre>
+<div id="train-test-split" class="section level2">
+<h2>Train-Test Split</h2>
+<pre class="r"><code>sort(unique(df$year))</code></pre>
+<pre><code>##  [1] 1990 1991 1992 1993 1994 1995 1996 1997 1998 1999 2000 2001 2002 2003 2004
+## [16] 2005 2006 2007 2008 2009 2010 2011 2012 2013 2014 2015 2016 2017 2018 2019
+## [31] 2020 2021</code></pre>
+<pre class="r"><code>train_set &lt;- df %&gt;% filter(year &lt; 2021)
+test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
+<pre class="r"><code>head(train_set)</code></pre>
+<pre><code>##   year month       town flat_type block      street_name storey_range
+## 1 1990     1 ANG MO KIO    1 ROOM   309 ANG MO KIO AVE 1     10 TO 12
+## 2 1990     1 ANG MO KIO    1 ROOM   309 ANG MO KIO AVE 1     04 TO 06
+## 3 1990     1 ANG MO KIO    1 ROOM   309 ANG MO KIO AVE 1     10 TO 12
+## 4 1990     1 ANG MO KIO    1 ROOM   309 ANG MO KIO AVE 1     07 TO 09
+## 5 1990     1 ANG MO KIO    3 ROOM   216 ANG MO KIO AVE 1     04 TO 06
+## 6 1990     1 ANG MO KIO    3 ROOM   211 ANG MO KIO AVE 3     01 TO 03
+##   storey_range_from storey_range_to floor_area_sqm     flat_model resale_price
+## 1                10              12             31       IMPROVED         9000
+## 2                 4               6             31       IMPROVED         6000
+## 3                10              12             31       IMPROVED         8000
+## 4                 7               9             31       IMPROVED         6000
+## 5                 4               6             73 NEW GENERATION        47200
+## 6                 1               3             67 NEW GENERATION        46000
+##   remaining_lease     region storey_range_mean floor_area_sqm_bins
+## 1              86 North-East                11             27 - 47
+## 2              86 North-East                 5             27 - 47
+## 3              86 North-East                11             27 - 47
+## 4              86 North-East                 8             27 - 47
+## 5              85 North-East                 5             67 - 87
+## 6              86 North-East                 2             47 - 67
+##   new_flat_model resale_price_bins
+## 1           Flat     4000 - 139600
+## 2           Flat     4000 - 139600
+## 3           Flat     4000 - 139600
+## 4           Flat     4000 - 139600
+## 5         Others     4000 - 139600
+## 6         Others     4000 - 139600</code></pre>
+<pre class="r"><code>head(test_set)</code></pre>
+<pre><code>##   year month       town flat_type block       street_name storey_range
+## 1 2021     9 ANG MO KIO    2 ROOM   406 ANG MO KIO AVE 10     04 TO 06
+## 2 2021     4 ANG MO KIO    2 ROOM   314  ANG MO KIO AVE 3     01 TO 03
+## 3 2021     1 ANG MO KIO    2 ROOM   170  ANG MO KIO AVE 4     07 TO 09
+## 4 2021     1 ANG MO KIO    2 ROOM   170  ANG MO KIO AVE 4     01 TO 03
+## 5 2021     4 ANG MO KIO    2 ROOM   174  ANG MO KIO AVE 4     04 TO 06
+## 6 2021     5 ANG MO KIO    2 ROOM   116  ANG MO KIO AVE 4     04 TO 06
+##   storey_range_from storey_range_to floor_area_sqm flat_model resale_price
+## 1                 4               6             44   IMPROVED       233000
+## 2                 1               3             44   IMPROVED       218000
+## 3                 7               9             45   IMPROVED       225000
+## 4                 1               3             45   IMPROVED       211000
+## 5                 4               6             45   IMPROVED       208500
+## 6                 4               6             44   IMPROVED       230000
+##   remaining_lease     region storey_range_mean floor_area_sqm_bins
+## 1              57 North-East                 5             27 - 47
+## 2              56 North-East                 2             27 - 47
+## 3              64 North-East                 8             27 - 47
+## 4              64 North-East                 2             27 - 47
+## 5              64 North-East                 5             27 - 47
+## 6              56 North-East                 5             27 - 47
+##   new_flat_model resale_price_bins
+## 1           Flat   139600 - 275200
+## 2           Flat   139600 - 275200
+## 3           Flat   139600 - 275200
+## 4           Flat   139600 - 275200
+## 5           Flat   139600 - 275200
+## 6           Flat   139600 - 275200</code></pre>
+</div>
 <div id="linear-regression" class="section level2">
 <h2>Linear Regression</h2>
 <pre class="r"><code># TODO</code></pre>

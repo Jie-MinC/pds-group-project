@@ -6,6 +6,10 @@ output: html_document
 # Modeling
 
 ```{r}
+library(dplyr)
+```
+
+```{r}
 df <- read.csv("../data/data_clean.csv")
 ```
 
@@ -19,6 +23,25 @@ str(df)
 
 ```{r}
 colnames(df)
+```
+
+## Train-Test Split
+
+```{r}
+sort(unique(df$year))
+```
+
+```{r}
+train_set <- df %>% filter(year < 2021)
+test_set <- df %>% filter(year == 2021)
+```
+
+```{r}
+head(train_set)
+```
+
+```{r}
+head(test_set)
 ```
 
 ## Linear Regression
