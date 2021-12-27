@@ -7,6 +7,7 @@ output: html_document
 
 ```{r}
 library(dplyr)
+library(glmnet)
 ```
 
 ```{r}
@@ -47,6 +48,23 @@ head(train_set)
 head(test_set)
 ```
 
+## Helper Functions
+
+```{r}
+get_metrics <- function(y_actual, y_predict) {
+  mae <- mean(abs(y_actual - y_predict))
+  mse <- mean((y_actual - y_predict)^2)
+  rmse <- sqrt(mse)
+  
+  sse <- sum((y_actual - y_predict)^2)
+  sst <- sum((y_actual - mean(y_actual))^2)
+  rsq <- 1 - (sse / sst)
+  
+  metrics <- data.frame(MAE = mae, MSE = mse, RMSE = rmse, "R-squared" = rsq)
+  return (metrics)
+}
+```
+
 ## Linear Regression
 
 ```{r}
@@ -65,16 +83,85 @@ head(test_set)
 # TODO
 ```
 
+## Data Transformation for glmnet
+
+To use `glmnet` for Lasso, Ridge and Elastic Net, data has to be split into features (matrix) and label.
+
+Label:
+`resale_price`
+
+Features:
+`town`, `block`, `street_name`, `flat_type`, `storey_range`, `floor_area_sqm`, `new_flat_model`, `remaining_lease`
+
+Notes:
+
+- `year` is only for train-test split.
+- `month` is not considered as the transactions are uniform throughout the year.
+- `flat_model` is replaced by `new_flat_model`.
+- `region` is too general for modeling.
+- `price_per_sqm` is only for analysis.
+
+```{r}
+# "g_" prefix is used for glmnet related variables to avoid naming conflicts
+g_features <- c("town", "block", "street_name", "flat_type", "storey_range", "floor_area_sqm", "new_flat_model", "remaining_lease")
+
+# Select features and perform one-hot encoding
+g_X_train <- model.matrix(~ ., train_set %>% select(all_of(g_features)))[,-1]
+g_X_test <- model.matrix(~ ., test_set %>% select(all_of(g_features)))[,-1]
+
+# Select label
+g_y_train <- train_set$resale_price
+g_y_test <- test_set$resale_price
+```
+
 ## Lasso Regression (L1 Regularization)
 
 ```{r}
-# TODO
+set.seed(101)
+lasso_model <- cv.glmnet(g_X_train, g_y_train, alpha = 1, type.measure = "mse", family = "gaussian")
+```
+
+```{r}
+summary(lasso_model)
+```
+
+```{r}
+# Best lambda value
+lasso_model$lambda.1se
+```
+
+```{r}
+lasso_y_pred <- predict(lasso_model, newx = g_X_test, s = lasso_model$lambda.1se)
+```
+
+```{r}
+lasso_metrics <- get_metrics(g_y_test, lasso_y_pred)
+lasso_metrics
 ```
 
 ## Ridge Regression (L2 Regularization)
 
 ```{r}
-# TODO
+set.seed(101)
+ridge_model <- cv.glmnet(g_X_train, g_y_train, alpha = 0, type.measure = "mse", family = "gaussian")
+```
+
+```{r}
+summary(ridge_model)
+```
+
+```{r}
+# Best lambda value
+ridge_model$lambda.1se
+```
+
+```{r}
+ridge_y_pred <- predict(ridge_model, newx = g_X_test, s = ridge_model$lambda.1se)
+```
+
+```{r}
+ridge_metrics <- get_metrics(g_y_test, ridge_y_pred)
+ridge_metrics
 ```
 
 ## Elastic Net Regression

@@ -179,6 +179,9 @@ pre code {
 <pre><code>## The following objects are masked from &#39;package:base&#39;:
 ## 
 ##     intersect, setdiff, setequal, union</code></pre>
+<pre class="r"><code>library(glmnet)</code></pre>
+<pre><code>## Loading required package: Matrix</code></pre>
+<pre><code>## Loaded glmnet 4.1-3</code></pre>
 <pre class="r"><code>df &lt;- read.csv(&quot;../data/data_clean.csv&quot;, stringsAsFactors = TRUE)
 df$year &lt;- factor(df$year)
 df$month &lt;- factor(df$month)
@@ -278,6 +281,21 @@ test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
 ## 5       4633.33           Flat
 ## 6       5227.27           Flat</code></pre>
 </div>
+<div id="helper-functions" class="section level2">
+<h2>Helper Functions</h2>
+<pre class="r"><code>get_metrics &lt;- function(y_actual, y_predict) {
+  mae &lt;- mean(abs(y_actual - y_predict))
+  mse &lt;- mean((y_actual - y_predict)^2)
+  rmse &lt;- sqrt(mse)
+  
+  sse &lt;- sum((y_actual - y_predict)^2)
+  sst &lt;- sum((y_actual - mean(y_actual))^2)
+  rsq &lt;- 1 - (sse / sst)
+  
+  metrics &lt;- data.frame(MAE = mae, MSE = mse, RMSE = rmse, &quot;R-squared&quot; = rsq)
+  return (metrics)
+}</code></pre>
+</div>
 <div id="linear-regression" class="section level2">
 <h2>Linear Regression</h2>
 <pre class="r"><code># TODO</code></pre>
@@ -290,13 +308,83 @@ test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
 <h2>Time Series Regression</h2>
 <pre class="r"><code># TODO</code></pre>
 </div>
+<div id="data-transformation-for-glmnet" class="section level2">
+<h2>Data Transformation for glmnet</h2>
+<p>To use <code>glmnet</code> for Lasso, Ridge and Elastic Net, data has to be split into features (matrix) and label.</p>
+<p>Label: <code>resale_price</code></p>
+<p>Features: <code>town</code>, <code>block</code>, <code>street_name</code>, <code>flat_type</code>, <code>storey_range</code>, <code>floor_area_sqm</code>, <code>new_flat_model</code>, <code>remaining_lease</code></p>
+<p>Notes:</p>
+<ul>
+<li><code>year</code> is only for train-test split.</li>
+<li><code>month</code> is not considered as the transactions are uniform throughout the year.</li>
+<li><code>flat_model</code> is replaced by <code>new_flat_model</code>.</li>
+<li><code>region</code> is too general for modeling.</li>
+<li><code>price_per_sqm</code> is only for analysis.</li>
+</ul>
+<pre class="r"><code># &quot;g_&quot; prefix is used for glmnet related variables to avoid naming conflicts
+g_features &lt;- c(&quot;town&quot;, &quot;block&quot;, &quot;street_name&quot;, &quot;flat_type&quot;, &quot;storey_range&quot;, &quot;floor_area_sqm&quot;, &quot;new_flat_model&quot;, &quot;remaining_lease&quot;)
+
+# Select features and perform one-hot encoding
+g_X_train &lt;- model.matrix(~ ., train_set %&gt;% select(all_of(g_features)))[,-1]
+g_X_test &lt;- model.matrix(~ ., test_set %&gt;% select(all_of(g_features)))[,-1]
+
+# Select label
+g_y_train &lt;- train_set$resale_price
+g_y_test &lt;- test_set$resale_price</code></pre>
+</div>
 <div id="lasso-regression-l1-regularization" class="section level2">
 <h2>Lasso Regression (L1 Regularization)</h2>
-<pre class="r"><code># TODO</code></pre>
+<pre class="r"><code>set.seed(101)
+lasso_model &lt;- cv.glmnet(g_X_train, g_y_train, alpha = 1, type.measure = &quot;mse&quot;, family = &quot;gaussian&quot;)</code></pre>
+<pre class="r"><code>summary(lasso_model)</code></pre>
+<pre><code>##            Length Class  Mode     
+## lambda     97     -none- numeric  
+## cvm        97     -none- numeric  
+## cvsd       97     -none- numeric  
+## cvup       97     -none- numeric  
+## cvlo       97     -none- numeric  
+## nzero      97     -none- numeric  
+## call        6     -none- call     
+## name        1     -none- character
+## glmnet.fit 12     elnet  list     
+## lambda.min  1     -none- numeric  
+## lambda.1se  1     -none- numeric  
+## index       2     -none- numeric</code></pre>
+<pre class="r"><code># Best lambda value
+lasso_model$lambda.1se</code></pre>
+<pre><code>## [1] 66.89698</code></pre>
+<pre class="r"><code>lasso_y_pred &lt;- predict(lasso_model, newx = g_X_test, s = lasso_model$lambda.1se)</code></pre>
+<pre class="r"><code>lasso_metrics &lt;- get_metrics(g_y_test, lasso_y_pred)
+lasso_metrics</code></pre>
+<pre><code>##        MAE        MSE    RMSE R.squared
+## 1 59797.99 5312296247 72885.5 0.7983158</code></pre>
 </div>
 <div id="ridge-regression-l2-regularization" class="section level2">
 <h2>Ridge Regression (L2 Regularization)</h2>
-<pre class="r"><code># TODO</code></pre>
+<pre class="r"><code>set.seed(101)
+ridge_model &lt;- cv.glmnet(g_X_train, g_y_train, alpha = 0, type.measure = &quot;mse&quot;, family = &quot;gaussian&quot;)</code></pre>
+<pre class="r"><code>summary(ridge_model)</code></pre>
+<pre><code>##            Length Class  Mode     
+## lambda     100    -none- numeric  
+## cvm        100    -none- numeric  
+## cvsd       100    -none- numeric  
+## cvup       100    -none- numeric  
+## cvlo       100    -none- numeric  
+## nzero      100    -none- numeric  
+## call         6    -none- call     
+## name         1    -none- character
+## glmnet.fit  12    elnet  list     
+## lambda.min   1    -none- numeric  
+## lambda.1se   1    -none- numeric  
+## index        2    -none- numeric</code></pre>
+<pre class="r"><code># Best lambda value
+ridge_model$lambda.1se</code></pre>
+<pre><code>## [1] 9482.474</code></pre>
+<pre class="r"><code>ridge_y_pred &lt;- predict(ridge_model, newx = g_X_test, s = ridge_model$lambda.1se)</code></pre>
+<pre class="r"><code>ridge_metrics &lt;- get_metrics(g_y_test, ridge_y_pred)
+ridge_metrics</code></pre>
+<pre><code>##        MAE        MSE     RMSE R.squared
+## 1 58907.31 5406494162 73528.87 0.7947396</code></pre>
 </div>
 <div id="elastic-net-regression" class="section level2">
 <h2>Elastic Net Regression</h2>
