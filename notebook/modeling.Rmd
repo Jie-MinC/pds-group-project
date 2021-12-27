@@ -35,7 +35,7 @@ sort(unique(df$year))
 ```
 
 ```{r}
-train_set <- df %>% filter(year < 2021)
+train_set <- df %>% filter(year != 2021)
 test_set <- df %>% filter(year == 2021)
 ```
 

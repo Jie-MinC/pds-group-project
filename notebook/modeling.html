@@ -231,15 +231,30 @@ df$block &lt;- factor(df$block)</code></pre>
 <pre class="r"><code>sort(unique(df$year))</code></pre>
 <pre><code>## [1] 2015 2016 2017 2018 2019 2020 2021
 ## Levels: 2015 2016 2017 2018 2019 2020 2021</code></pre>
-<pre class="r"><code>train_set &lt;- df %&gt;% filter(year &lt; 2021)</code></pre>
-<pre><code>## Warning in Ops.factor(year, 2021): &#39;&lt;&#39; not meaningful for factors</code></pre>
-<pre class="r"><code>test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
+<pre class="r"><code>train_set &lt;- df %&gt;% filter(year != 2021)
+test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
 <pre class="r"><code>head(train_set)</code></pre>
-<pre><code>##  [1] year            month           town            flat_type      
-##  [5] block           street_name     storey_range    floor_area_sqm 
-##  [9] flat_model      remaining_lease resale_price    region         
-## [13] price_per_sqm   new_flat_model 
-## &lt;0 rows&gt; (or 0-length row.names)</code></pre>
+<pre><code>##   year month       town flat_type block       street_name storey_range
+## 1 2015     1 ANG MO KIO    3 ROOM   174  ANG MO KIO AVE 4     07 TO 09
+## 2 2015     1 ANG MO KIO    3 ROOM   541 ANG MO KIO AVE 10     01 TO 03
+## 3 2015     1 ANG MO KIO    3 ROOM   163  ANG MO KIO AVE 4     01 TO 03
+## 4 2015     1 ANG MO KIO    3 ROOM   446 ANG MO KIO AVE 10     01 TO 03
+## 5 2015     1 ANG MO KIO    3 ROOM   557 ANG MO KIO AVE 10     07 TO 09
+## 6 2015     1 ANG MO KIO    3 ROOM   603  ANG MO KIO AVE 5     07 TO 09
+##   floor_area_sqm     flat_model remaining_lease resale_price     region
+## 1             60       Improved              70       255000 North-East
+## 2             68 New Generation              65       275000 North-East
+## 3             69 New Generation              64       285000 North-East
+## 4             68 New Generation              63       290000 North-East
+## 5             68 New Generation              64       290000 North-East
+## 6             67 New Generation              64       290000 North-East
+##   price_per_sqm new_flat_model
+## 1       4250.00           Flat
+## 2       4044.12           Flat
+## 3       4130.43           Flat
+## 4       4264.71           Flat
+## 5       4264.71           Flat
+## 6       4328.36           Flat</code></pre>
 <pre class="r"><code>head(test_set)</code></pre>
 <pre><code>##   year month       town flat_type block       street_name storey_range
 ## 1 2021     9 ANG MO KIO    2 ROOM   406 ANG MO KIO AVE 10     04 TO 06
