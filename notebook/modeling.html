@@ -388,7 +388,63 @@ ridge_metrics</code></pre>
 </div>
 <div id="elastic-net-regression" class="section level2">
 <h2>Elastic Net Regression</h2>
-<pre class="r"><code># TODO</code></pre>
+<pre class="r"><code># Experiment with a range of alpha values.
+set.seed(101)
+
+elastic_alpha_list &lt;- c(0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1)
+elastic_lambda_list &lt;- numeric()
+elastic_mse_list &lt;- numeric()
+
+for (i in elastic_alpha_list) {
+  elastic_temp_model &lt;- cv.glmnet(g_X_train, g_y_train, alpha = i, type.measure = &quot;mse&quot;, family = &quot;gaussian&quot;)
+  elastic_lambda_list &lt;- c(elastic_lambda_list, elastic_temp_model$lambda.1se)
+  
+  elastic_temp_y_pred &lt;- predict(elastic_temp_model, newx = g_X_test, s = elastic_temp_model$lambda.1se)
+  elastic_temp_mse &lt;- mean((g_y_test - elastic_temp_y_pred)^2)
+  elastic_mse_list &lt;- c(elastic_mse_list, elastic_temp_mse)
+}
+
+elastic_result &lt;- data.frame(alpha = elastic_alpha_list, lambda = elastic_lambda_list, mse = elastic_mse_list)
+elastic_result</code></pre>
+<pre><code>##   alpha    lambda        mse
+## 1  0.10 609.54035 5290626048
+## 2  0.50 111.07809 5299685361
+## 3  0.70  72.29302 5298084920
+## 4  0.90  56.22790 5299463803
+## 5  0.95  70.41787 5312259431
+## 6  0.99  67.57271 5312361323
+## 7  1.00  38.28091 5290400634</code></pre>
+<pre class="r"><code># Best alpha value
+elastic_min_mse &lt;- elastic_result %&gt;% filter(mse == min(mse))
+elastic_best_alpha &lt;- elastic_min_mse$alpha
+elastic_best_alpha</code></pre>
+<pre><code>## [1] 1</code></pre>
+<p>Note: Best alpha value is 1, which indicates that Lasso is preferred in this case.</p>
+<pre class="r"><code># Create model with the best alpha value
+set.seed(101)
+elastic_model &lt;- cv.glmnet(g_X_train, g_y_train, alpha = elastic_best_alpha, type.measure = &quot;mse&quot;, family = &quot;gaussian&quot;)</code></pre>
+<pre class="r"><code>summary(elastic_model)</code></pre>
+<pre><code>##            Length Class  Mode     
+## lambda     97     -none- numeric  
+## cvm        97     -none- numeric  
+## cvsd       97     -none- numeric  
+## cvup       97     -none- numeric  
+## cvlo       97     -none- numeric  
+## nzero      97     -none- numeric  
+## call        6     -none- call     
+## name        1     -none- character
+## glmnet.fit 12     elnet  list     
+## lambda.min  1     -none- numeric  
+## lambda.1se  1     -none- numeric  
+## index       2     -none- numeric</code></pre>
+<pre class="r"><code># Best lambda value
+elastic_model$lambda.1se</code></pre>
+<pre><code>## [1] 66.89698</code></pre>
+<pre class="r"><code>elastic_y_pred &lt;- predict(elastic_model, newx = g_X_test, s = elastic_model$lambda.1se)</code></pre>
+<pre class="r"><code>elastic_metrics &lt;- get_metrics(g_y_test, elastic_y_pred)
+elastic_metrics</code></pre>
+<pre><code>##        MAE        MSE    RMSE R.squared
+## 1 59797.99 5312296247 72885.5 0.7983158</code></pre>
 </div>
 <div id="decision-tree-regression" class="section level2">
 <h2>Decision Tree Regression</h2>
@@ -405,10 +461,22 @@ ridge_metrics</code></pre>
 </div>
 <div id="model-selection" class="section level1">
 <h1>Model Selection</h1>
-<pre class="r"><code># Compare all models
-# Choose the best model
-# Train the final model with full dataset
-# Save model</code></pre>
+<p>Compile metrics from all models.</p>
+<pre class="r"><code>model_names &lt;- c(&quot;Lasso&quot;, &quot;Ridge&quot;, &quot;Elastic Net&quot;) # Add other model names here
+all_models &lt;- rbind(lasso_metrics, ridge_metrics, elastic_metrics) # Add other metrics here
+row.names(all_models) &lt;- model_names
+all_models</code></pre>
+<pre><code>##                  MAE        MSE     RMSE R.squared
+## Lasso       59797.99 5312296247 72885.50 0.7983158
+## Ridge       58907.31 5406494162 73528.87 0.7947396
+## Elastic Net 59797.99 5312296247 72885.50 0.7983158</code></pre>
+<p>Choose the model with highest R-squared value.</p>
+<pre class="r"><code>all_models %&gt;% filter(R.squared == max(R.squared))</code></pre>
+<pre><code>##                  MAE        MSE    RMSE R.squared
+## Lasso       59797.99 5312296247 72885.5 0.7983158
+## Elastic Net 59797.99 5312296247 72885.5 0.7983158</code></pre>
+<p>Train and save the final model.</p>
+<pre class="r"><code># TODO</code></pre>
 </div>
 
 
