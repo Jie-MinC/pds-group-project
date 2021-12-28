@@ -4,6 +4,7 @@
 # tabName = "tab_{tabname}"
 # id for inputs: "i_{tabname}_{id}"
 # id for outputs: "o_{tabname}_{id}"
+# change appdone<- TRUE in Initiation section to remove construction box
 
 
 # Library -----------------------------------------------------------------
@@ -17,7 +18,12 @@ library(leaflet)
 
 # Initiation --------------------------------------------------------------
 # one time code here
-
+appdone<-FALSE
+constructionbox<-box(
+    width=12, height=150, background = "red",
+    h2("This app is still under construction."),
+    h2("Contents shown are mostly placeholder which may not be real.")
+)
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader( 
@@ -62,6 +68,7 @@ body <- dashboardBody(
         ######################### Visualisation tab        
         tabItem(
             "tab_vis",
+            if (appdone==FALSE) {constructionbox},
             
             ########### Intro
             "Welcome! If your name is Amy or is planning to", 
@@ -136,6 +143,7 @@ body <- dashboardBody(
         ######################### Prediction tab        
         tabItem(
             "tab_pred",
+            if (appdone==FALSE) {constructionbox},
             
             ################ Intro
             "Let's do some prediction!", br(),
@@ -219,6 +227,8 @@ body <- dashboardBody(
         ######################### Documentation tab
         tabItem(
             "tab_doc",
+            if (appdone==FALSE) {constructionbox},
+            
             box(title = "Dataset", width = 12,
                 collapsible = FALSE,
                 "The prediction model is trained using the", 
@@ -248,7 +258,10 @@ body <- dashboardBody(
         
         ######################### Todo tab
         tabItem(
-            "tab_todo", fluidRow(
+            "tab_todo", 
+            if (appdone==FALSE) {constructionbox},
+            
+            fluidRow(
                 
                 box(title="Icon choices", width = 5,
                     collapsible = TRUE,
