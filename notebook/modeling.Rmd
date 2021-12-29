@@ -102,12 +102,28 @@ Notes:
 - `price_per_sqm` is only for analysis.
 
 ```{r}
+# Helper function to scale floor_area_sqm to z-score
+scale_floor_area_sqm <- function(floor_area_sqm) {
+  mean_floor_area_sqm <- mean(train_set$floor_area_sqm)
+  std_floor_area_sqm <- sd(train_set$floor_area_sqm)
+  z_score <- (floor_area_sqm - mean_floor_area_sqm) / std_floor_area_sqm
+  return (z_score)
+}
+```
+
+
+```{r}
 # "g_" prefix is used for glmnet related variables to avoid naming conflicts
 g_features <- c("town", "block", "street_name", "flat_type", "storey_range", "floor_area_sqm", "new_flat_model", "remaining_lease")
 
-# Select features and perform one-hot encoding
-g_X_train <- model.matrix(~ ., train_set %>% select(all_of(g_features)))[,-1]
-g_X_test <- model.matrix(~ ., test_set %>% select(all_of(g_features)))[,-1]
+# Select features, scale and perform one-hot encoding
+g_X_train_temp <- train_set %>% select(all_of(g_features))
+g_X_train_temp$floor_area_sqm <- scale_floor_area_sqm(g_X_train_temp$floor_area_sqm)
+g_X_train <- model.matrix(~ ., g_X_train_temp)[,-1]
+
+g_X_test_temp <- test_set %>% select(all_of(g_features))
+g_X_test_temp$floor_area_sqm <- scale_floor_area_sqm(g_X_test_temp$floor_area_sqm)
+g_X_test <- model.matrix(~ ., g_X_test_temp)[,-1]
 
 # Select label
 g_y_train <- train_set$resale_price

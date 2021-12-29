@@ -321,12 +321,24 @@ test_set &lt;- df %&gt;% filter(year == 2021)</code></pre>
 <li><code>region</code> is too general for modeling.</li>
 <li><code>price_per_sqm</code> is only for analysis.</li>
 </ul>
+<pre class="r"><code># Helper function to scale floor_area_sqm to z-score
+scale_floor_area_sqm &lt;- function(floor_area_sqm) {
+  mean_floor_area_sqm &lt;- mean(train_set$floor_area_sqm)
+  std_floor_area_sqm &lt;- sd(train_set$floor_area_sqm)
+  z_score &lt;- (floor_area_sqm - mean_floor_area_sqm) / std_floor_area_sqm
+  return (z_score)
+}</code></pre>
 <pre class="r"><code># &quot;g_&quot; prefix is used for glmnet related variables to avoid naming conflicts
 g_features &lt;- c(&quot;town&quot;, &quot;block&quot;, &quot;street_name&quot;, &quot;flat_type&quot;, &quot;storey_range&quot;, &quot;floor_area_sqm&quot;, &quot;new_flat_model&quot;, &quot;remaining_lease&quot;)
 
-# Select features and perform one-hot encoding
-g_X_train &lt;- model.matrix(~ ., train_set %&gt;% select(all_of(g_features)))[,-1]
-g_X_test &lt;- model.matrix(~ ., test_set %&gt;% select(all_of(g_features)))[,-1]
+# Select features, scale and perform one-hot encoding
+g_X_train_temp &lt;- train_set %&gt;% select(all_of(g_features))
+g_X_train_temp$floor_area_sqm &lt;- scale_floor_area_sqm(g_X_train_temp$floor_area_sqm)
+g_X_train &lt;- model.matrix(~ ., g_X_train_temp)[,-1]
+
+g_X_test_temp &lt;- test_set %&gt;% select(all_of(g_features))
+g_X_test_temp$floor_area_sqm &lt;- scale_floor_area_sqm(g_X_test_temp$floor_area_sqm)
+g_X_test &lt;- model.matrix(~ ., g_X_test_temp)[,-1]
 
 # Select label
 g_y_train &lt;- train_set$resale_price
