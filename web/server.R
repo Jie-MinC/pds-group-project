@@ -12,15 +12,17 @@ library(dplyr)
 library(ggplot2)
 library(plotly)
 library(readr)
-
-
-
-
+library(jsonlite)
 
 # Inititation -------------------------------------------------------------
 # load cleaned dataset from github
 ghurl<- 'https://media.githubusercontent.com/media/yongkokkhuen/pds-group-project/main/data/data_clean.csv'
-cleancsv<- data.frame(read_csv(ghurl))
+#cleancsv<- data.frame(read_csv(ghurl))
+cleancsv<- data.frame(read_csv("www/data_clean.csv"))
+
+# open street map api
+osmapi<- c("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=",
+           "&lon=")
 
 # Shiny Server ------------------------------------------------------------
 shinyServer(function(input, output, session) {
@@ -80,5 +82,38 @@ shinyServer(function(input, output, session) {
     ################ output in tab_doc
 
     ################ output in tab_todo
+    output$o_todo_map<- renderLeaflet({
+        leaflet(options = leafletOptions(zoomSnap = 0.5, zoomDelta=0.5)) %>% 
+            addProviderTiles(providers$OneMapSG.Original, 
+                             options = providerTileOptions(
+                                 minZoom = 10.5, maxZoom = 15)) %>%
+            setView(lat = 1.318, lng=103.84, zoom=10.5)
+    }) #close render Leaflet
+    
+    output$o_todo_map_zlvl<- renderText({
+        paste("Zoom Level: ", input$o_todo_map_zoom, sep="")
+    }) #print zoom level
+    
+    observeEvent(input$o_todo_map_click, {
+        fLat<-toString(input$o_todo_map_click[1])
+        fLng<-toString(input$o_todo_map_click[2])
+        
+        output$o_todo_map_clickloc<- renderText({
+            
+            paste( "Latitude: ", fLat, '\n',
+                   "Longitude: ", fLng, sep="")
+        }) #print lat lng
+        
+        output$o_todo_map_add<- renderText({
+            
+            osmurl<- paste(osmapi[1],fLat,osmapi[2],fLng, sep="")
+            suppressWarnings(
+                osmjson<- fromJSON(readLines(osmurl))
+            )
+            osmjson$display_name
+        }) # print address
+    }
+    )
+    
     
 }) #close shinyServer bracket

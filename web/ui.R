@@ -14,6 +14,7 @@ library(dashboardthemes)
 library(shinyjs)
 library(plotly)
 library(leaflet)
+library(jsonlite)
 
 
 # Initiation --------------------------------------------------------------
@@ -93,6 +94,7 @@ body <- dashboardBody(
                             "No plotting here yet."
                         ), #close control column
                         column(9,
+                               "hi"
                                #plotlyOutput("o_vis_area")
                         ) #close plot column
                     )# close fluidR bracket
@@ -130,7 +132,7 @@ body <- dashboardBody(
                             plotlyOutput("o_vis_nfm")
                         ) #close plot column
                     )# close fluidR bracket          
-                ), # close nfm bracket
+                )# close nfm bracket
                 
             ), #close plotting tabbox bracket
             br(),
@@ -190,7 +192,7 @@ body <- dashboardBody(
                                 min = 100, max = 200, 
                                 value = 150
                     ) #close flat type input bracket 
-                    ), #close flat type column bracket
+                    ) #close flat type column bracket
                     
                 ),# close 2nd row bracket
                 
@@ -210,7 +212,7 @@ body <- dashboardBody(
                        
                     ) #close predict button column bracket
                     
-                ),# close 2nd row bracket
+                )# close 2nd row bracket
                 
                 
             ),#close flat feature box bracket
@@ -263,21 +265,37 @@ body <- dashboardBody(
             
             fluidRow(
                 
-                box(title="Icon choices", width = 5,
-                    collapsible = TRUE,
-                    img(src = "icons.png", height = '250px', width = '400px',
-                        alt = "icon choices")
-                    
-                ), #close icon box bracket
+                column(5,
+                    box(title="Icon choices", width=12,
+                             collapsible = TRUE,
+                             img(src = "icons.png", height = '250px', width = '400px',
+                                 alt = "icon choices")
+                             
+                    ),#close icon box bracket
                 
-                box(title="Theme and colors", width = 5,
-                    collapsible = TRUE,
-                    "including change bg color for button like 'reset' ",
-                    "in prediction tab"
-                    
-                )#close theme box bracket
+                    box(title="Theme and colors", width=12,
+                        collapsible = TRUE,
+                        "including change bg color for button like 'reset' ",
+                        "in prediction tab"
+                        
+                    )#close theme box bracket
+                ),
+                
+                
+                column(6,
+                    box(title=" Map!", width = 12, height = 650,
+                        collapsible=TRUE,
+                        leafletOutput("o_todo_map"), br(),
+                        textOutput("o_todo_map_zlvl"), br(),
+                        "Clicked on:", br(),
+                        textOutput("o_todo_map_clickloc"), br(),
+                        "Address:", br(),
+                        textOutput("o_todo_map_add")
+                    )#close map box
+                )
                 
             )# close fluidrow bracket
+            
         )#close todo tabItem bracket
 
         
