@@ -8,21 +8,12 @@
 # Library -----------------------------------------------------------------
 library(shiny)
 library(shinyjs)
-library(dplyr)
-library(ggplot2)
 library(plotly)
-library(readr)
 library(jsonlite)
+library(leaflet)
 
 # Inititation -------------------------------------------------------------
-# load cleaned dataset from github
-ghurl<- 'https://media.githubusercontent.com/media/yongkokkhuen/pds-group-project/main/data/data_clean.csv'
-#cleancsv<- data.frame(read_csv(ghurl))
-cleancsv<- data.frame(read_csv("www/data_clean.csv"))
-
-# open street map api
-osmapi<- c("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=",
-           "&lon=")
+#moved to global.R
 
 # Shiny Server ------------------------------------------------------------
 shinyServer(function(input, output, session) {
@@ -32,33 +23,15 @@ shinyServer(function(input, output, session) {
     ################ output in tab_vis
     
     output$o_vis_area<-renderPlotly({
-        areaplot<- cleancsv %>% 
-            filter(year %in% input$i_vis_area_y) %>%
-            ggplot(aes(x=floor_area_sqm, y=resale_price, color = region)) +
-            geom_point() +
-            scale_color_brewer(type = "qual", palette = 5)
-        
-        #ggplotly(areaplot)
+        areaplot
     })
     
     output$o_vis_region<-renderPlot({
-        cleancsv %>% filter(year %in% input$i_vis_region_y) %>%
-            ggplot(aes(x=region,y=resale_price, fill = region)) + theme_bw() +
-            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-            geom_violin() + geom_boxplot(width = 0.1) + theme(legend.position="none")+
-            scale_color_brewer(type = "qual", palette = 5)
-        
-        #ggplotly(regplot)
+        regplot
     })
     
-    output$o_vis_nfm<-renderPlotly({
-        nfmplot<- cleancsv %>% filter(year %in% input$i_vis_nfm_y) %>%
-            #group_by(new_flat_model)
-            ggplot(aes(x=resale_price, fill = new_flat_model)) + theme_bw() +
-            theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-            geom_density(alpha=0.5)  
-        
-        ggplotly(nfmplot)
+    output$o_vis_nfm<-renderPlot({
+       nfmplot
     })
     
     
@@ -68,13 +41,58 @@ shinyServer(function(input, output, session) {
     
     
     ################ output in tab_pred
+    observeEvent(input$i_pred_mapbut, {
+        
+        showModal(modalDialog(
+            title = "Map",
+            leafletOutput("o_pred_map"), 
+            br(),
+            "Estimated Region: ", textOutput("o_pred_map_reg", inline = TRUE),
+            br(),
+            "Estimated Town: ", textOutput("o_pred_map_town", inline = TRUE),
+            size="m",
+            footer = modalButton("Confirm")
+            )
+        )
+        
+    })
+    
+    output$o_pred_map<- renderLeaflet({
+        SgMap
+    }) #close render Leaflet
+    
+    observeEvent(input$o_pred_map_click, {
+        regtext<- "North"
+        towntext<- "BEDOK"
+        
+        output$o_pred_map_reg<- renderText({regtext})
+        updateSelectInput(session, "i_pred_region", selected = regtext)
+        
+        output$o_pred_map_town<- renderText({towntext})
+        updateSelectInput(session, "i_pred_town", selected = towntext)
+        
+    })
+    
+    
     observeEvent(input$i_pred_predbut, {
         output$o_pred_res<- renderText({
-            "No model predict what"
+            outputtext<- isolate (
+                { paste(input$i_pred_region,
+                  input$i_pred_town,
+                  input$i_pred_streetN,
+                  input$i_pred_block,
+                  input$i_pred_flatM,
+                  input$i_pred_NoS,
+                  input$i_pred_RLease,
+                  input$i_pred_flatT,
+                  input$i_pred_floorA, sep="; ")}
+            )
+            outputtext
         }) #close render result bracket
-    }) #close observe predbit bracket
+    }) #close observe predbut bracket
     
     observeEvent(input$i_pred_resetbut, {
+        updateSelectInput(session, "i_pred_region",selected="Central")
         output$o_pred_res<- renderText({""
         }) #close render result bracket
     }) #close observe resetbut bracket
@@ -82,17 +100,6 @@ shinyServer(function(input, output, session) {
     ################ output in tab_doc
 
     ################ output in tab_todo
-    output$o_todo_map<- renderLeaflet({
-        leaflet(options = leafletOptions(zoomSnap = 0.5, zoomDelta=0.5)) %>% 
-            addProviderTiles(providers$OneMapSG.Original, 
-                             options = providerTileOptions(
-                                 minZoom = 10.5, maxZoom = 15)) %>%
-            setView(lat = 1.318, lng=103.84, zoom=10.5)
-    }) #close render Leaflet
-    
-    output$o_todo_map_zlvl<- renderText({
-        paste("Zoom Level: ", input$o_todo_map_zoom, sep="")
-    }) #print zoom level
     
     observeEvent(input$o_todo_map_click, {
         fLat<-toString(input$o_todo_map_click[1])
