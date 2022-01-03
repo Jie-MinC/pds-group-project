@@ -8,4 +8,3 @@
 | presentation  | R Presentations files.            |
 | visualization | Visualization files.              |
 | web           | Shiny app code.                   |
-testing

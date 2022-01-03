@@ -328,16 +328,25 @@ scale_floor_area_sqm &lt;- function(floor_area_sqm) {
   z_score &lt;- (floor_area_sqm - mean_floor_area_sqm) / std_floor_area_sqm
   return (z_score)
 }</code></pre>
+<pre class="r"><code># Helper function to scale remaining_lease to z-score
+scale_remaining_lease &lt;- function(remaining_lease) {
+  mean_remaining_lease &lt;- mean(train_set$remaining_lease)
+  std_remaining_lease &lt;- sd(train_set$remaining_lease)
+  z_score &lt;- (remaining_lease - mean_remaining_lease) / std_remaining_lease
+  return (z_score)
+}</code></pre>
 <pre class="r"><code># &quot;g_&quot; prefix is used for glmnet related variables to avoid naming conflicts
 g_features &lt;- c(&quot;town&quot;, &quot;block&quot;, &quot;street_name&quot;, &quot;flat_type&quot;, &quot;storey_range&quot;, &quot;floor_area_sqm&quot;, &quot;new_flat_model&quot;, &quot;remaining_lease&quot;)
 
 # Select features, scale and perform one-hot encoding
 g_X_train_temp &lt;- train_set %&gt;% select(all_of(g_features))
 g_X_train_temp$floor_area_sqm &lt;- scale_floor_area_sqm(g_X_train_temp$floor_area_sqm)
+g_X_train_temp$remaining_lease &lt;- scale_remaining_lease(g_X_train_temp$remaining_lease)
 g_X_train &lt;- model.matrix(~ ., g_X_train_temp)[,-1]
 
 g_X_test_temp &lt;- test_set %&gt;% select(all_of(g_features))
 g_X_test_temp$floor_area_sqm &lt;- scale_floor_area_sqm(g_X_test_temp$floor_area_sqm)
+g_X_test_temp$remaining_lease &lt;- scale_remaining_lease(g_X_test_temp$remaining_lease)
 g_X_test &lt;- model.matrix(~ ., g_X_test_temp)[,-1]
 
 # Select label
