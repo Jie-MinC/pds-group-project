@@ -5,10 +5,9 @@ account: ltyeoh
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5368014
-bundleId: 5423337
+bundleId: 5437202
 url: https://ltyeoh.shinyapps.io/sg_flat_resale_price/
-when: 1640975353.87522
-lastSyncTime: 1640975353.87522
+when: 1641401459.77812
+lastSyncTime: 1641401459.77812
 asMultiple: FALSE
 asStatic: FALSE
-ignoredFiles: www/input_choices.R

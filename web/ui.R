@@ -12,6 +12,7 @@ library(shiny)
 library(shinydashboard)
 library(dashboardthemes)
 library(shinyjs)
+library(shinyBS)
 library(plotly)
 library(leaflet)
 
@@ -206,6 +207,7 @@ body <- dashboardBody(
                            ) #close map button input bracket
                     )#close map col
                     
+
                 ), #close location row bracket
                 
                 ############### 2nd row for flat features  
@@ -283,7 +285,10 @@ body <- dashboardBody(
             box(title="Results", width = 12, height = 300,
                 collapsible = FALSE,
                 textOutput("o_pred_res")
-            ) #close results box bracket
+            ), #close results box bracket
+            #to fix background color
+            br(),
+            "need text to fix background?"
             
         ), #close pred tabItem bracket
         

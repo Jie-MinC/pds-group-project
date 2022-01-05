@@ -8,12 +8,14 @@
 # Library -----------------------------------------------------------------
 library(shiny)
 library(shinyjs)
+library(shinyBS)
 library(plotly)
 library(jsonlite)
 library(leaflet)
 
 # Inititation -------------------------------------------------------------
 #moved to global.R
+# mapModal<-
 
 # Shiny Server ------------------------------------------------------------
 shinyServer(function(input, output, session) {
@@ -42,19 +44,20 @@ shinyServer(function(input, output, session) {
     
     ################ output in tab_pred
     observeEvent(input$i_pred_mapbut, {
-        
-        showModal(modalDialog(
-            title = "Map",
+        showModal(modalDialog( 
+            title = "Map", id="o_pred_map_modal", 
             leafletOutput("o_pred_map"), 
             br(),
+            textOutput("o_pred_map_loc"),
             "Estimated Region: ", textOutput("o_pred_map_reg", inline = TRUE),
             br(),
             "Estimated Town: ", textOutput("o_pred_map_town", inline = TRUE),
-            size="m",
+            br(),
+            textOutput("o_pred_map_add"),
+            easyClose=TRUE, 
             footer = modalButton("Confirm")
-            )
         )
-        
+        )
     })
     
     output$o_pred_map<- renderLeaflet({
@@ -62,14 +65,37 @@ shinyServer(function(input, output, session) {
     }) #close render Leaflet
     
     observeEvent(input$o_pred_map_click, {
+        
+        fLat<-as.numeric(input$o_pred_map_click[1])
+        fLng<-as.numeric(input$o_pred_map_click[2])
+        
+        distvec<- summarise(TownData,dist = geodist(fLat,fLng,Lat,Lng))
+        
+        towntext<- TownData$Town[which.min(unlist(distvec))]
         regtext<- "North"
-        towntext<- "BEDOK"
+        
+        #actual address
+        fLat<-toString(fLat)
+        fLng<-toString(fLng)
+        
+        output$o_pred_map_add<- renderText({
+                
+            osmurl<- paste(osmapi[1],fLat,osmapi[2],fLng, sep="")
+            suppressWarnings(
+                osmjson<- fromJSON(readLines(osmurl))
+            )
+            osmjson$display_name
+        })
+        
+        output$o_pred_map_loc<- renderText(paste(fLat,fLng, sep = " , "))
         
         output$o_pred_map_reg<- renderText({regtext})
         updateSelectInput(session, "i_pred_region", selected = regtext)
         
         output$o_pred_map_town<- renderText({towntext})
         updateSelectInput(session, "i_pred_town", selected = towntext)
+        
+        
         
     })
     
@@ -100,27 +126,6 @@ shinyServer(function(input, output, session) {
     ################ output in tab_doc
 
     ################ output in tab_todo
-    
-    observeEvent(input$o_todo_map_click, {
-        fLat<-toString(input$o_todo_map_click[1])
-        fLng<-toString(input$o_todo_map_click[2])
-        
-        output$o_todo_map_clickloc<- renderText({
-            
-            paste( "Latitude: ", fLat, '\n',
-                   "Longitude: ", fLng, sep="")
-        }) #print lat lng
-        
-        output$o_todo_map_add<- renderText({
-            
-            osmurl<- paste(osmapi[1],fLat,osmapi[2],fLng, sep="")
-            suppressWarnings(
-                osmjson<- fromJSON(readLines(osmurl))
-            )
-            osmjson$display_name
-        }) # print address
-    }
-    )
     
     
 }) #close shinyServer bracket
