@@ -12,18 +12,19 @@ library(shiny)
 library(shinydashboard)
 library(dashboardthemes)
 library(shinyjs)
+library(shinyBS)
 library(plotly)
 library(leaflet)
 
 
 # Initiation --------------------------------------------------------------
-# one time code here
-appdone<-FALSE
+# moved to global.R
 constructionbox<-box(
     width=12, height=150, background = "red",
     h2("This app is still under construction."),
     h2("Contents shown are mostly placeholder which may not be real.")
 )
+
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader( 
@@ -63,6 +64,7 @@ body <- dashboardBody(
     ############################# preparation
     useShinyjs(),
     shinyDashboardThemes(theme="poor_mans_flatly"),
+    #shinyDashboardThemes(theme="grey_dark"),
     
     tabItems(
         ######################### Visualisation tab        
@@ -93,6 +95,7 @@ body <- dashboardBody(
                             "No plotting here yet."
                         ), #close control column
                         column(9,
+                               "hi"
                                #plotlyOutput("o_vis_area")
                         ) #close plot column
                     )# close fluidR bracket
@@ -107,7 +110,8 @@ body <- dashboardBody(
                                                "2020"= 2020)    
                             ),
                             br(),
-                            "This is gg plot"
+                            "Year input ignored", br(),
+                            "This is preloaded gg plot"
                         ), #close control column
                         column(9,
                             plotOutput("o_vis_region")
@@ -121,16 +125,19 @@ body <- dashboardBody(
                             selectInput("i_vis_nfm_y", label = "Year",
                                 choices = list("2018"= 2018,
                                                "2019"= 2019,
-                                               "2020"= 2020)    
+                                               "2020"= 2020
+                                               )    
                                 ),
                             br(),
-                            "This is plotly plot"
+                            "Year input ignored", br(),
+                            "Changed back to ggplot instead of plotly ",
+                            "to improve performance"
                         ), #close control column
                         column(9,
-                            plotlyOutput("o_vis_nfm")
+                            plotOutput("o_vis_nfm")
                         ) #close plot column
                     )# close fluidR bracket          
-                ), # close nfm bracket
+                )# close nfm bracket
                 
             ), #close plotting tabbox bracket
             br(),
@@ -151,46 +158,106 @@ body <- dashboardBody(
             br(),
             
             ################ feature box
-            box(title = "Flat Features", width = 12,
-                collapsible = FALSE,
+            box(title = "Flat Details", width = 12, height= 550,
+                collapsible = TRUE,
                 
-                ############### 1st row for town, flat model and type
+                ############### 1st row for location
                 fluidRow(
-                    column(4, selectInput(
-                        "i_pred_town", label = "Town",
-                        choices = list("A"="a","B"="b"),
-                        selected = "a"
-                    ) #close town input bracket
-                    ), # close town input column bracket
+                    
+                    column(12, h3("Location:")),
+                    
+                    column(5, 
+                        selectInput(
+                            width = "100%",
+                            "i_pred_region", label = "Region",
+                            choices = as.list(sort(inputC$region))
+                            #selected = "North"
+                        ), #close region input bracket
+                        
+                        selectInput( 
+                            width = "100%",
+                            "i_pred_streetN", label = "Street Name",
+                            choices = as.list(sort(inputC$street_name))
+                            #selected = "Road 01"
+                        ) #close streetN input bracket
+                    ), #close 1st column bracket
                     
                     
-                    column(4,selectInput(
-                        "i_pred_FType", label = "Flat Type",
-                        choices = list("1 Room"="1r","2 Room"="2r"),
-                        selected = "1r"
-                    )#close flat type input bracket
-                    ), #close flat type column bracket
+                    column(5,
+                        selectInput(
+                            width = "100%",
+                            "i_pred_town", label = "Town",
+                            choices = as.list(sort(inputC$town))
+                            #selected = "Bedok"
+                        ), #close town input bracket
+                        
+                        numericInput(
+                            width = "50%",
+                            "i_pred_block", label = "Block Number",
+                            min=inputC$block[1], 
+                            max = inputC$block[2], 
+                            value= floor(mean(inputC$block)), step = 1
+                        ) #close block input bracket
+                    ), #close 2nd column bracket
                     
-                    column(4,selectInput(
-                        "i_pred_FModel", label = "Flat Model",
-                        choices = list("Model A"="Ma","Model B"="Mb"),
-                        selected = "Mb"
-                    )#close flat model input bracket
-                    )#close flat model column bracket
+                    column(2,
+                           actionButton("i_pred_mapbut",
+                                width = "100%",
+                                label = "Use Map"
+                           ) #close map button input bracket
+                    )#close map col
                     
-                ), #close 2nd row bracket
+
+                ), #close location row bracket
                 
-                ############### 2nd row for area   
+                ############### 2nd row for flat features  
                 
                 fluidRow(
-                    column(4, sliderInput(
-                        "i_pred_area", 
+                    column(12, h3("Flat Features:")),
+                    
+                    column(4, 
+                           selectInput(
+                               width = "100%",
+                               "i_pred_flatM", label = "Flat Model",
+                               choices = as.list(sort(inputC$new_flat_model))
+                               #selected = "DBSS"
+                           ), #close flatM input bracket
+                           
+                           selectInput(
+                               width = "100%",
+                               "i_pred_flatT", label = "Flat Type",
+                               choices = as.list(sort(inputC$flat_type))
+                               #selected = "1 Room"
+                           ) #close flatT input bracket
+                    ), #close 1st column bracket
+                    
+                    column(4, 
+                           selectInput(
+                               width = "100%",
+                               "i_pred_NoS", label = "Number of Storey",
+                               choices = as.list(sort(inputC$storey_range))
+                               #selected = "01 to 03"
+                           ), #close NoS input bracket
+                           
+                           sliderInput(
+                                width = "100%",
+                                "i_pred_floorA", 
                                 label = HTML(paste0("Floor Area (m", tags$sup("2"), ")")),
-                                width = "300px",
-                                min = 100, max = 200, 
-                                value = 150
-                    ) #close flat type input bracket 
-                    ), #close flat type column bracket
+                                min = inputC$floor_area_sqm[1],
+                                max = inputC$floor_area_sqm[2], 
+                                value = mean(inputC$floor_area_sqm)
+                            ) #close floor area bracket 
+                    ), #close 2nd column bracket
+                    
+                    column (4,
+                        sliderInput(
+                            width = "100%",
+                            "i_pred_RLease", label = "Remaining Lease (year)",
+                            min = inputC$remaining_lease[1],
+                            max = inputC$remaining_lease[2],
+                            value = mean(inputC$remaining_lease)
+                        ) #close RLease bracket 
+                    )
                     
                 ),# close 2nd row bracket
                 
@@ -210,17 +277,18 @@ body <- dashboardBody(
                        
                     ) #close predict button column bracket
                     
-                ),# close 2nd row bracket
-                
-                
-            ),#close flat feature box bracket
-            
+                )# close flat feature row bracket
+            ),#close flat detail box bracket
+            br(),
             
             #################### results box
-            box(title="Results", width = 12,
+            box(title="Results", width = 12, height = 300,
                 collapsible = FALSE,
                 textOutput("o_pred_res")
-            ) #close results box bracket
+            ), #close results box bracket
+            #to fix background color
+            br(),
+            "need text to fix background?"
             
         ), #close pred tabItem bracket
         
@@ -263,21 +331,39 @@ body <- dashboardBody(
             
             fluidRow(
                 
-                box(title="Icon choices", width = 5,
-                    collapsible = TRUE,
-                    img(src = "icons.png", height = '250px', width = '400px',
-                        alt = "icon choices")
-                    
-                ), #close icon box bracket
+                column(6,
+                    box(title="Icon choices", width=12,
+                        collapsible = TRUE,
+                        img(src = "icons.png", height = '250px', width = '400px',
+                                 alt = "icon choices"), br(),
+                        tags$a(href="https://getbootstrap.com/docs/3.4/components/#glyphicons",
+                               "Link to full icon list")
+                             
+                    ),#close icon box bracket
                 
-                box(title="Theme and colors", width = 5,
-                    collapsible = TRUE,
-                    "including change bg color for button like 'reset' ",
-                    "in prediction tab"
-                    
-                )#close theme box bracket
+                    box(title="Theme and colors", width=12,
+                        collapsible = TRUE,
+                        "including change bg color for button like 'reset' ",
+                        "in prediction tab"
+                        
+                    )#close theme box bracket
+                ),
                 
+                column(6,
+                    box(title = "Others", width=12,
+                        tags$ul(
+                            tags$li("town lat lng"),
+                            tags$li("reverse geocoding algorithm"),
+                            tags$li("Location availability logic?"),
+                            tags$li("reset button update inputs"),
+                            tags$li("slow problem?")
+                        )
+                    )
+                )
+                
+            
             )# close fluidrow bracket
+            
         )#close todo tabItem bracket
 
         
