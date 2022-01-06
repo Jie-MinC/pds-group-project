@@ -1,0 +1,45 @@
+---
+title: "CorrelationAnalytics"
+output: html_document
+---
+# Correlation Analytics for Property Price Factors
+
+This R markdown file serves to provide correlation analytics using ***ANOVA** for the identification of important, relevant factors in predicting property prices
+
+As some variable have unclear data, in order to decide on the significance of dropping/including it, we performed ANOVA analysis on the below factors to observe its correlation with the y value we predict, which is the resale price
+- flat type
+- flat model
+- storey range
+- street name
+
+# Read dataset
+```{r}
+propertyprice = read.csv("C:\\Users\\Wei Wen\\Downloads\\resale-flat-prices\\resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv")
+```
+
+# Simple EDA for dataset
+```{r}
+head(propertyprice)
+```
+
+# Correlation R value for floor area sqm with resale price
+```{r}
+plot(propertyprice$floor_area_sqm,propertyprice$resale_price)
+cor(propertyprice$floor_area_sqm,propertyprice$resale_price)
+cor.test(propertyprice$floor_area_sqm,propertyprice$resale_price)
+```
+
+# ANOVA Analysis
+```{r}
+street.aov <- aov(resale_price ~ street_name, data = propertyprice)
+summary(street.aov)
+flattype.aov <- aov(resale_price ~ flat_type, data = propertyprice)
+summary(flattype.aov)
+storey.aov <- aov(resale_price ~ storey_range, data = propertyprice)
+summary(storey.aov)
+flatmodel.aov <- aov(resale_price ~ flat_model, data = propertyprice)
+summary(flatmodel.aov)
+library(car)
+ancova_model <- aov(resale_price ~ street_name + flat_type, data = propertyprice)
+Anova(ancova_model, type="III")
+```
