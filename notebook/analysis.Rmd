@@ -1,6 +1,6 @@
 ---
 title: "Prediction On Resale Flat Price"
-output: html_document
+output: html_notebook
 ---
 
 ```{r setup, include=FALSE}
@@ -25,6 +25,7 @@ library(summarytools)
 library(car)
 library(dlookr)
 library(ggplot2)
+library(plyr)
 ```
 
 ***
@@ -35,6 +36,8 @@ library(ggplot2)
 ```{r}
 data_2015_2016 <- read.csv("../data/resale-flat-prices-based-on-registration-date-from-jan-2015-to-dec-2016.csv", header = TRUE, sep = ",")
 data_2017 <- read.csv("../data/resale-flat-prices-based-on-registration-date-from-jan-2017-onwards.csv", header = TRUE, sep = ",")
+
+data_info <- read.csv("../data/hdb-property-information.csv", header = TRUE, sep = ",")
 ```
 
 ## Data Columns Exploration
@@ -44,15 +47,83 @@ print("data_2015_2016:")
 str(data_2015_2016)
 print("data_2017:")
 str(data_2017)
+print("data_info:")
+str(data_info)
+
 ```
+## Data Preprocessing Before Data Integration
+
+Transform the remaining lease to month for data_2015_2016.
+```{r}
+data_2015_2016$remaining_lease <- data_2015_2016$remaining_lease * 12
+str(data_2015_2016$remaining_lease)
+```
+Transform the remaining lease to month for data_2017.
+```{r}
+convert_remaining_lease <- function(remaining_lease) {
+  lease <- trimws(remaining_lease)
+  year <- substr(lease, 0, 2)
+  
+  
+  result <- ifelse(grepl("month", lease), as.integer(year) * 12 + as.integer(substr(lease, 9, 11)) , as.integer(year) * 12)
+  return(result)
+}
+
+data_2017$remaining_lease <- convert_remaining_lease(data_2017$remaining_lease)
+str(data_2017$remaining_lease)
+```
+
+Drop columns from data_info that are not contributing for resale price prediction.
+```{r}
+data_info <- data_info %>% select(c("bldg_contract_town", "street", "blk_no", "max_floor_lvl", "commercial", "market_hawker", "miscellaneous", "multistorey_carpark", "precinct_pavilion"))
+str(data_info)
+```
+Convert Y/N to binary.
+```{r}
+
+data_info$commercial <- ifelse(data_info$commercial == "Y", 1, 0)
+data_info$market_hawker <- ifelse(data_info$market_hawker == "Y", 1, 0)
+data_info$miscellaneous <- ifelse(data_info$miscellaneous == "Y", 1, 0)
+data_info$multistorey_carpark <- ifelse(data_info$multistorey_carpark == "Y", 1, 0)
+data_info$precinct_pavilion <- ifelse(data_info$precinct_pavilion == "Y", 1, 0)
+
+str(data_info)
+
+```
+Convert town in short form to full text
+```{r}
+
+town_short <- c("AMK","BB","BD","BH","BM","BP","BT","CCK","CL","CT","GL","HG","JE","JW","KWN","MP","PG","PRC","QT","SB","SGN","SK","TAP","TG","TP","WL","YS")
+town_full <- c( "ANG MO KIO","BUKIT BATOK","BEDOK","BISHAN","BUKIT MERAH","BUKIT PANJANG","BUKIT TIMAH","CHOA CHU KANG","CLEMENTI","CENTRAL AREA","GEYLANG","HOUGANG","JURONG EAST","JURONG WEST","KALLANG/WHAMPOA","MARINE PARADE","PUNGGOL","PASIR RIS","QUEENSTOWN","SEMBAWANG","SERANGOON","SENGKANG","TAMPINES","TENGAH","TOA PAYOH","WOODLANDS","YISHUN")
+
+data_info$bldg_contract_town <- mapvalues(data_info$bldg_contract_town, from=town_short, to=town_full)
+str(data_info$bldg_contract_town)
+
+unique(sort(data_info$bldg_contract_town))
+unique(sort(data_2015_2016$town))
+unique(sort(data_2017$town))
+
+```
+
 ## Data Integration
 
+Merge both resale price datasets.
 ```{r}
 data <- rbind(data_2015_2016, data_2017)
 str(data)
 ```
 
-The merged dataset contains total 152,455 observations (flat resales transaction) and 11 variables.
+Join the resale price dataset and HDB property information dataset.
+```{r}
+
+names(data_info)[names(data_info) == "bldg_contract_town"] <- "town"
+names(data_info)[names(data_info) == "street"] <- "street_name"
+names(data_info)[names(data_info) == "blk_no"] <- "block"
+
+data = merge(x = data, y = data_info, by = c("town","street_name","block"))
+str(data)
+```
+The merged dataset contains total 152,455 observations (flat resales transaction) and 17 variables.
 
 ## Data Exploration To Detect Incorrect Data, Handling Incorrect Data, and Transforming Data
 
@@ -277,46 +348,22 @@ str(data$block)
 sort(summary(data$block))
 ```
   * there's no missing value
-  * exploration by plotting
-  * select blocks of top 10 highest transaction records and top 10 lowest transaction records
-```{r}
-groupby_block <- data  %>% 
-     group_by(block) %>%
-     summarise(n = n()) %>%
-     arrange(n, decreasing = TRUE)
-
-btm10 <- head(groupby_block,10)
-top10 <- tail(groupby_block,10)
-
-# TOP 10 block with highest transactions
-data_filter <- data %>% 
-  filter(block %in% top10$block)
-
-p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
-  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
-  xlab("block")
-
-p + coord_flip() + scale_y_continuous(limit = c(0, 1000))
-
-# BOTTOM 10 block with lowest transactions
-data_filter <- data %>% 
-  filter(block %in% btm10$block)
-
-p <- ggplot(data_filter, aes(x = fct_infreq(block), fill = fct_infreq(block))) +
-  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
-  xlab("block")
-
-p + coord_flip() + scale_y_continuous(limit = c(0, 5))
-
-``` 
-
   * remove the alphabet in block number to reduce the number of unique value
 
 ```{r}
-
 data$block <- gsub("[^0-9.-]", "", data$block)
-head(data$block)
-tail(data$block)
+data$block <- as.factor(data$block)
+
+data %>% 
+  distinct(block) %>%
+  head()
+
+data %>% 
+  distinct(block) %>%
+  tail()
+
+str(data$block)
+sort(summary(data$block))
 ```
 
   * exploration by plotting
@@ -324,11 +371,11 @@ tail(data$block)
 ```{r}
 groupby_block <- data  %>% 
      group_by(block) %>%
-     summarise(n = n()) %>%
+     dplyr::summarise(n = n()) %>%
      arrange(n, decreasing = TRUE)
 
-btm10 <- head(groupby_block,10)
-top10 <- tail(groupby_block,10)
+top10 <- head(groupby_block,10)
+btm10 <- tail(groupby_block,10)
 
 # TOP 10 block with highest transactions
 data_filter <- data %>% 
@@ -383,11 +430,11 @@ sort(summary(data$street_name))
 ```{r}
 groupby_street <- data  %>% 
      group_by(street_name) %>%
-     summarise(n = n()) %>%
+     dplyr::summarise(n = n()) %>%
      arrange(n, decreasing = TRUE)
 
-btm10 <- head(groupby_street,10)
-top10 <- tail(groupby_street,10)
+top10 <- head(groupby_street,10)
+btm10 <- tail(groupby_street,10)
 
 # TOP 10 street_name with highest transactions
 data_filter <- data %>% 
@@ -453,7 +500,7 @@ p + coord_flip() + scale_y_continuous(limit = c(0, 3000))
 
   * Storey range of 04 TO 06 has the highest transaction records, more than 35,000 rows
   * Storey range of 49 TO 51 has the lowest transaction records, less than 500 rows
-  * Most of the HDB are <= 12 floors
+  * Storey range from 01 TO 12 has higher transaction records compared to other floor level
 
   
 ### 7. floor_area_sqm
@@ -596,115 +643,6 @@ p <- ggplot(data_filter, aes(x = fct_infreq(flat_model), fill = fct_infreq(flat_
 p + coord_flip() + scale_y_continuous(limit = c(0, 3000))
 ```
 
-```{r}
-sort(unique(data$flat_model))
-```
-  * Definition of flat model:
-    1. 2-ROOM
-      * A 2-room flexi HDB flat is a compact living space which is ideal for singles or young couples. They usually consist of 1 bedroom and 1 bathroom.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    2. ADJOINED FLAT
-      * Adjoined flats are two flats converted into a single property by homeowners. They usually consist of 5 or 4 bedrooms.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    3. APARTMENT
-    
-    4. DBSS
-      * Design, Build and Sell Scheme (DBSS) flat offer extras in terms of designs and finishes.
-      * https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats
-    5. IMPROVED
-      * Improved flats (1/2/3/4-room) were introduced in 1966, the 3/4-room having separate WC and shower, they also featured void decks.
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    6. IMPROVED-MAISONETTE
-    
-    7. MAISONETTE
-    
-    8. MODEL A
-      * In 1981 were introduced Model A flats: 3-Room (75 sqm), 4-Room (105 sqm), 5-Room (135 sqm), 5-Room Maisonette (139 sqm)
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    9. MODEL A-MAISONETTE
-      * Model A Maisonettes are HDB flats that have two separate levels. They usually consist of 3 bedrooms and 3 bathrooms. 
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    10. MODEL A2
-      * 1994-1998 slab block with 4-Room Model A (100 sqm) and 5-Room Improved (120-123 sqm), some blocks have some smaller units named 4-Room Model A2 (90 sqm), some have different corners with 4-Room and 5-Room units, others have a wing with 2 units of 5-Room
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    11. MULTI GENERATION
-      * Multi-Generation flats can only be bought by multi-generational families, comprising of a married or courting couple, and one set of parents.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    12. NEW GENERATION
-      * In 1975 were completed the first New Generation flats: 3-Room (67 / 82 sqm) and 4-Room (92 sqm).
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    13. PREMIUM APARTMENT
-      * The Executive Apartment is an HDB flat which comes with an additional space that can be used as a study room or a living room. In addition to this, some of the executive apartments even come with a balcony space.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    14. PREMIUM APARTMENT LOFT
-      * HDB loft units are units that come with two storeys and a high ceiling. The living area is typically much bigger than most HDB units. For those who are familiar with executive maisonettes, HDB loft units are the newer and more 'evolved' version of maisonettes.
-      * https://www.propertyguru.com.sg/property-guides/hdb-loft-units-2-35594
-    15. PREMIUM MAISONETTE
-      * Executive Maisonettes are the more premium version of Model A Maisonettes. These units are no longer being built after being replaced by the Executive Condominium (EC) scheme in 1995.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    16. SIMPLIFIED
-      * In 1984 were introduced Simplified flats, 3-Room (64 sqm), 4-Room (84 sqm).
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    17. STANDARD
-      * Standard flats (1/2/3/4-room) had WC and shower in same room.
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    18. TERRACE
-      * Terrace HDB houses were first built in the 1960s when the Housing and Development Board (HDB) hadn't come into the picture yet. These homes were handled by the Singapore Improvement Trust.
-      * https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html
-    19. TYPE S1
-      * Pinnacle @ Duxton, the first 50-storey public housing complex, was launched via BTO in May 2004 and got first residents in December 2009, for HDB anniversary of 50 years in February 2010. Composed by 7 blocks × 44 residential floors × 6 units per floor = 1848 units, it was the biggest BTO project to date. It included 2 levels of skybridges, 2 flat types (S1 4-Room 90-93 sqm and S2 5-room 103-106 sqm), different combinations of bay windows, balconies and planters create 35 distinct flat layouts.
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-    20. TYPE S2
-      * Pinnacle @ Duxton, the first 50-storey public housing complex, was launched via BTO in May 2004 and got first residents in December 2009, for HDB anniversary of 50 years in February 2010. Composed by 7 blocks × 44 residential floors × 6 units per floor = 1848 units, it was the biggest BTO project to date. It included 2 levels of skybridges, 2 flat types (S1 4-Room 90-93 sqm and S2 5-room 103-106 sqm), different combinations of bay windows, balconies and planters create 35 distinct flat layouts.
-      * https://www.teoalida.com/singapore/hdbfloorplans/
-      
-  * Types below are classified as uncommon flat model (refer to https://blog.carousell.com/property/hdb-flat-types-singapore/):
-    1. Maisonette
-    2. Terrace
-    3. Adjoined flat
-    
-  * regroup flat model based on findings above
-```{r}
-data$new_flat_model <- ifelse (data$flat_model %in% c("Improved","Model A","Model A2", "New Generation", "Simplified", "Standard",
-                                                      "Type S1", "Type S2"), "Flat",
-                       ifelse (grepl("Apartment", data$flat_model), "Apartment",
-                               ifelse (grepl("Maisonette", data$flat_model), "Maisonette",
-                                                       as.character(data$flat_model))))
-                    
-head(data)
-head(data$new_flat_model)
-tail(data$new_flat_model)
-str(data$new_flat_model)
-
-data$new_flat_model <- as.factor(data$new_flat_model)
-
-str(data$new_flat_model)
-sort(summary(data$new_flat_model))
-
-```
-  * exploration by plotting
-```{r}
-p <- ggplot(data, aes(x = fct_infreq(new_flat_model), fill = fct_infreq(new_flat_model))) +
-  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
-  xlab("new_flat_model")
-
-p + coord_flip() + scale_y_continuous(limit = c(0, 150000))
-
-# Zoom in
-data_filter <- data %>%
-  group_by(new_flat_model) %>%
-  filter(n() < 500)
-
-p <- ggplot(data_filter, aes(x = fct_infreq(new_flat_model), fill = fct_infreq(new_flat_model))) +
-  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
-  xlab("new_flat_model")
-
-p + coord_flip() + scale_y_continuous(limit = c(0, 500))
-```
-
-  * Flat type HDB has the highest transaction records, more than 100,000 rows
-  * 2-ROOM type HDB has the lowest transaction records, less than 50 rows
-
 ### 9. lease_commence_date
 
 ```{r}
@@ -797,16 +735,36 @@ boxplot(data$resale_price ~ data$region)
 boxplot(data$resale_price ~ data$floor_area_sqm_bins)
 ```
   
-  * correlation between two variables
+  * correlation between variables
   
 ```{r}
 ggplot(data) +
-  aes(x = resale_price, y = floor_area_sqm_bins, colour = region) +
+  aes(x = floor_area_sqm, y = resale_price, colour = flat_type) +
   geom_point() +
   scale_color_hue()
 
 ggplot(data) +
-  aes(x = resale_price, y = price_per_sqm, colour = region) +
+  aes(x = max_floor_lvl, y = resale_price, colour = flat_type) +
+  geom_point() +
+  scale_color_hue()
+
+ggplot(data) +
+  aes(x = remaining_lease, y = resale_price, colour = flat_type) +
+  geom_point() +
+  scale_color_hue()
+
+ggplot(data) +
+  aes(x = floor_area_sqm, y = resale_price, colour = region) +
+  geom_point() +
+  scale_color_hue()
+
+ggplot(data) +
+  aes(x = max_floor_lvl, y = resale_price, colour = region) +
+  geom_point() +
+  scale_color_hue()
+
+ggplot(data) +
+  aes(x = remaining_lease, y = resale_price, colour = region) +
   geom_point() +
   scale_color_hue()
 ```
@@ -822,22 +780,14 @@ data %>% summarise(na = sum(is.na(remaining_lease)))
 summary(data$remaining_lease)
 
 ```
-  * standardize to years
-```{r}
-data$used_lease <- data$int_year - data$lease_commence_date
 
-data$remaining_lease <- as.integer(99 - data$used_lease)
-
-data %>% summarise(na = sum(is.na(remaining_lease)))
-summary(data$remaining_lease)
-str(data$remaining_lease)
-
-```
   * exploration by plotting
 ```{r}
-barplot(table(data$remaining_lease), ylim=c(0,10000), las = 2)
-
 data_plot <- data
+data_plot$remaining_lease <- as.integer(data$remaining_lease / 12)
+
+barplot(table(data_plot$remaining_lease), ylim=c(0,10000), las = 2)
+
 data_plot$remaining_lease <- as.factor(data_plot$remaining_lease)
 p <- ggplot(data_plot, aes(x = fct_infreq(remaining_lease), fill = fct_infreq(remaining_lease))) +
   geom_bar(width = 1, colour = "black", show.legend = FALSE) +
@@ -857,10 +807,205 @@ p <- ggplot(data_filter, aes(x = fct_infreq(remaining_lease), fill = fct_infreq(
 p + coord_flip() + scale_y_continuous(limit = c(0, 100))
 ```
   
-  * 95 remaining lease year has the highest transaction records, more than 8,000 rows
-  * 44 remaining lease year has the lowest transaction records, less than 20 rows
+  * 94 remaining lease year has the highest transaction records, more than 8,000 rows
+  * 97 remaining lease year has the lowest transaction records, less than 20 rows
   * remaining lease year > 96 has very low transaction records, should be due to the restriction to sell the HDB if purchased less than N years
 
+### 12. max_floor_lvl
+
+```{r}
+head(data$max_floor_lvl)
+tail(data$max_floor_lvl)
+str(data$max_floor_lvl)
+
+data %>% summarise(na = sum(is.na(max_floor_lvl)))
+summary(data$max_floor_lvl)
+
+```
+
+  * there's no missing value
+  * exploration by plotting
+```{r}
+
+barplot(table(data$max_floor_lvl), ylim=c(0,40000), las = 2)
+
+data_plot <- data
+data_plot$max_floor_lvl <- as.factor(data_plot$max_floor_lvl)
+p <- ggplot(data_plot, aes(x = fct_infreq(max_floor_lvl), fill = fct_infreq(max_floor_lvl))) +
+  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
+  xlab("max_floor_lvl")
+
+p + coord_flip() + scale_y_continuous(limit = c(0, 40000))
+
+# Zoom in 
+data_filter <- data_plot %>% 
+  group_by(max_floor_lvl) %>%
+  filter(n() < 100)
+
+p <- ggplot(data_filter, aes(x = fct_infreq(max_floor_lvl), fill = fct_infreq(max_floor_lvl))) +
+  geom_bar(width = 1, colour = "black", show.legend = FALSE) +
+  xlab("max_floor_lvl")
+
+p + coord_flip() + scale_y_continuous(limit = c(0, 100))
+```
+
+  * 12 max floor level has the highest transaction records, more than 30,000 rows
+  * 48 max floor level has the lowest transaction records, less than 20 rows
+  * Most of the HDB are having 10-18 max floor levels
+
+### 13. commercial
+
+```{r}
+head(data$commercial)
+tail(data$commercial)
+str(data$commercial)
+unique(data$market_hawker)
+
+data %>% summarise(na = sum(is.na(commercial)))
+
+```
+
+  * there's no missing value
+  * exploration by plotting
+```{r}
+barplot(table(data$commercial), ylim=c(0,150000), las = 2)
+
+ggplot(data = data, aes(x = factor(commercial), fill = factor(commercial))) +
+geom_bar(aes(y = (..count..)/sum(..count..)),
+         position = "dodge") + 
+geom_text(aes(y = (..count..)/sum(..count..), 
+              label = paste0(round(prop.table(..count..) * 100,2), '%')), 
+          stat = 'count', 
+          position = position_dodge(.9), 
+          size = 3)+ 
+labs(x = 'commercial', y = 'Percent', fill = 'commercial')
+
+```
+  * Most of the HDB are far away from commercial area
+
+
+### 14. market_hawker
+
+```{r}
+head(data$market_hawker)
+tail(data$market_hawker)
+str(data$market_hawker)
+unique(data$market_hawker)
+
+data %>% summarise(na = sum(is.na(market_hawker)))
+
+```
+  * there's no missing value
+  * exploration by plotting
+```{r}
+barplot(table(data$market_hawker), ylim=c(0,200000), las = 2)
+barplot(table(data$market_hawker), ylim=c(0,100), las = 2)
+
+ggplot(data = data, aes(x = factor(market_hawker), fill = factor(market_hawker))) +
+geom_bar(aes(y = (..count..)/sum(..count..)),
+         position = "dodge") + 
+geom_text(aes(y = (..count..)/sum(..count..), 
+              label = paste0(round(prop.table(..count..) * 100,2), '%')), 
+          stat = 'count', 
+          position = position_dodge(.9), 
+          size = 3)+ 
+labs(x = 'market_hawker', y = 'Percent', fill = 'market_hawker')
+
+```
+
+  * Most of the HDB are far away from market and hawker area
+
+### 15. miscellaneous
+
+```{r}
+head(data$miscellaneous)
+tail(data$miscellaneous)
+str(data$miscellaneous)
+unique(data$miscellaneous)
+
+data %>% summarise(na = sum(is.na(miscellaneous)))
+
+```
+
+  * there's no missing value
+  * exploration by plotting
+```{r}
+barplot(table(data$miscellaneous), ylim=c(0,120000), las = 2)
+
+ggplot(data = data, aes(x = factor(miscellaneous), fill = factor(miscellaneous))) +
+geom_bar(aes(y = (..count..)/sum(..count..)),
+         position = "dodge") + 
+geom_text(aes(y = (..count..)/sum(..count..), 
+              label = paste0(round(prop.table(..count..) * 100,2), '%')), 
+          stat = 'count', 
+          position = position_dodge(.9), 
+          size = 3)+ 
+labs(x = 'miscellaneous', y = 'Percent', fill = 'miscellaneous')
+
+```
+  * Most of the HDB are far away from admin office, childcare centre, education centre, Residents' Committees centre, etc
+
+### 16. multistorey_carpark
+
+```{r}
+head(data$multistorey_carpark)
+tail(data$multistorey_carpark)
+str(data$multistorey_carpark)
+unique(data$multistorey_carpark)
+
+data %>% summarise(na = sum(is.na(multistorey_carpark)))
+
+```
+
+  * there's no missing value
+  * exploration by plotting
+```{r}
+barplot(table(data$multistorey_carpark), ylim=c(0,200000), las = 2)
+
+ggplot(data = data, aes(x = factor(multistorey_carpark), fill = factor(multistorey_carpark))) +
+geom_bar(aes(y = (..count..)/sum(..count..)),
+         position = "dodge") + 
+geom_text(aes(y = (..count..)/sum(..count..), 
+              label = paste0(round(prop.table(..count..) * 100,2), '%')), 
+          stat = 'count', 
+          position = position_dodge(.9), 
+          size = 3)+ 
+labs(x = 'multistorey_carpark', y = 'Percent', fill = 'multistorey_carpark')
+
+```
+
+  * Most of the HDB do not have multistorey car park
+
+### 17. precinct_pavilion
+
+```{r}
+head(data$precinct_pavilion)
+tail(data$precinct_pavilion)
+str(data$precinct_pavilion)
+unique(data$precinct_pavilion)
+
+data %>% summarise(na = sum(is.na(precinct_pavilion)))
+
+```
+
+  * there's no missing value
+  * exploration by plotting
+```{r}
+barplot(table(data$precinct_pavilion), ylim=c(0,200000), las = 2)
+
+ggplot(data = data, aes(x = factor(precinct_pavilion), fill = factor(precinct_pavilion))) +
+geom_bar(aes(y = (..count..)/sum(..count..)),
+         position = "dodge") + 
+geom_text(aes(y = (..count..)/sum(..count..), 
+              label = paste0(round(prop.table(..count..) * 100,2), '%')), 
+          stat = 'count', 
+          position = position_dodge(.9), 
+          size = 3)+ 
+labs(x = 'precinct_pavilion', y = 'Percent', fill = 'precinct_pavilion')
+
+```
+
+  * Most of the HDB do not have precinct pavilion
 
 ### Drop Columns
 ```{r}
@@ -868,7 +1013,7 @@ str(data)
 ``` 
   * drop columns that are useless for prediction
 ```{r}
-data <- data[,-which(names(data) %in% c("lease_commence_date","int_year","floor_area_sqm_bins","resale_price_bins","used_lease"))]
+data <- data[,-which(names(data) %in% c("lease_commence_date","int_year","floor_area_sqm_bins","resale_price_bins"))]
 
 ```  
 
