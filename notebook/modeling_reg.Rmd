@@ -1,6 +1,6 @@
 ---
 title: "Prediction On Resale Flat Prices"
-output: html_document
+output: html_notebook
 ---
 
 # Modeling
