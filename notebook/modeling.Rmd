@@ -68,13 +68,54 @@ get_metrics <- function(y_actual, y_predict) {
 ## Linear Regression
 
 ```{r}
-# TODO
+library(stats)
+set.seed(101)
+
+
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+
+reg_train_set <- train_set %>% select(all_of(selected_columns))
+reg_test_set <- test_set %>% select(all_of(selected_columns))
+
+  
+reg_model = lm(resale_price ~.,data = reg_train_set)
+
 ```
 
+```{r}
+summary(reg_model)
+
+```
+
+```{r}
+reg_pred <- predict(reg_model,newdata = reg_test_set)
+```
+
+```{r}
+reg_metrics = get_metrics(reg_test_set$resale_price ,reg_pred)
+reg_metrics
+```
 ## Polynomial Regression
 
 ```{r}
-# TODO
+set.seed(101)
+poly_reg_model 
+```
+
+```{r}
+summary(poly_reg_model)
+```
+
+```{r}
+poly_reg_pred <- predict(poly_reg_model)
+```
+
+```{r}
+poly_reg_metrics = get_metrics()
+```
 ```
 
 ## Time Series Regression
