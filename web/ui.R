@@ -16,7 +16,6 @@ library(shinyBS)
 library(plotly)
 library(leaflet)
 
-
 # Initiation --------------------------------------------------------------
 # moved to global.R
 constructionbox<-box(
@@ -47,7 +46,7 @@ sidebar <- dashboardSidebar(
         ),
         
         menuItem("Documentation", tabName="tab_doc",
-                 icon = icon("list-alt", lib="glyphicon")
+                 icon = icon("file", lib="glyphicon")
         ),
         
         menuItem("Todo", tabName="tab_todo"
@@ -82,62 +81,89 @@ body <- dashboardBody(
             ########### Plottings
             tabBox(
                 height = 450, width = 12,
-                selected = "Region",
+                selected = "Trend",
                 
-                tabPanel("Floor Area", 
+                tabPanel("Trend", 
+                    style= "background-color: #808080;",
                     fluidRow(
-                        column(3,
-                            selectInput("i_vis_area_y", label = "Year",
-                                        choices = list("2018"= 2018,
-                                                       "2019"= 2019,
-                                                       "2020"= 2020)    
+                        column(3, 
+                            selectInput("i_vis_trend_reg", label = "Region",
+                                choices = as.list(c("All",sort(inputC$region)))     
                             ),
-                            "No plotting here yet."
+                            selectInput("i_vis_trend_town", label = "Town",
+                                choices = as.list(c("All",sort(inputC$town)))     
+                            ),
+                            selectInput("i_vis_trend_FType", label = "Flat Type",
+                                choices = as.list(c("All",sort(inputC$flat_type)))    
+                            ),
+                            selectInput("i_vis_trend_FModel", label = "Flat Model",
+                                #choices = as.list(c("All",sort(inputC$new_flat_model)))
+                                choices = as.list(c("All",sort(inputC$flat_model)))
+                            ),
+                               
+                            actionButton("i_vis_trend_subbut",
+                                width = "100%",
+                                label = "Plot!"
+                            )
                         ), #close control column
+                        
+                        
                         column(9,
-                               "hi"
-                               #plotlyOutput("o_vis_area")
+                               plotOutput("o_vis_trend_plot")
                         ) #close plot column
                     )# close fluidR bracket
-                ), #close floor area bracket
+                ), #close trend bracket
                 
-                tabPanel("Region",
+                tabPanel("Price Heat Map",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_region_y", label = "Year",
-                                choices = list("2018"= 2018,
-                                               "2019"= 2019,
-                                               "2020"= 2020)    
+                            selectInput("i_vis_hm_xvar", label = "X-attribute",
+                                #choices = inputC$attChoices,
+                                choices = inputC$attChoices[c("Region","Town")],
+                                selected = "region"
                             ),
-                            br(),
-                            "Year input ignored", br(),
-                            "This is preloaded gg plot"
+                            selectInput("i_vis_hm_yvar", label = "Y-attribute",
+                                #choices = inputC$attChoices,
+                                choices = inputC$attChoices[c("Flat Type","Flat Model")],
+                                selected = "flat_type"
+                            ),
+                            selectInput("i_vis_hm_year", label = "Year",
+                                choices = as.list(c("All", sort(inputC$year))),
+                                selected = "All"
+                            ),
+                            
+                            actionButton("i_vis_hm_subbut",
+                                         width = "100%",
+                                         label = "Plot!"
+                            )
                         ), #close control column
                         column(9,
-                            plotOutput("o_vis_region")
+                            plotOutput("o_vis_hm")
                         ) #close plot column
                     )# close fluidR bracket     
-                ), #close region bracket
+                ), #close hm bracket
                 
-                tabPanel("New Flat Model",
+                tabPanel("Floor Area Scatter Plot",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_nfm_y", label = "Year",
-                                choices = list("2018"= 2018,
-                                               "2019"= 2019,
-                                               "2020"= 2020
-                                               )    
-                                ),
-                            br(),
-                            "Year input ignored", br(),
-                            "Changed back to ggplot instead of plotly ",
-                            "to improve performance"
+                            selectInput("i_vis_splot_z", label = "Color Attribute",
+                                choices = inputC$attChoices,
+                                selected = "region"
+                            ),
+                            selectInput("i_vis_splot_year", label = "Year",
+                                choices = as.list(c("All", sort(inputC$year))),
+                                selected = "All"
+                            ),
+                            actionButton("i_vis_splot_subbut",
+                                         width = "100%",
+                                         label = "Plot!"
+                            )
                         ), #close control column
                         column(9,
-                            plotOutput("o_vis_nfm")
+                            plotOutput("o_vis_splot")
                         ) #close plot column
                     )# close fluidR bracket          
-                )# close nfm bracket
+                )# close scatter plot bracket
                 
             ), #close plotting tabbox bracket
             br(),
@@ -159,7 +185,8 @@ body <- dashboardBody(
             
             ################ feature box
             box(title = "Flat Details", width = 12, height= 550,
-                collapsible = TRUE,
+                solidHeader = TRUE, collapsible = FALSE,
+                status = "warning",
                 
                 ############### 1st row for location
                 fluidRow(
@@ -219,8 +246,8 @@ body <- dashboardBody(
                            selectInput(
                                width = "100%",
                                "i_pred_flatM", label = "Flat Model",
-                               choices = as.list(sort(inputC$new_flat_model))
-                               #selected = "DBSS"
+                               #choices = as.list(sort(inputC$new_flat_model))
+                               choices = as.list(sort(inputC$flat_model))
                            ), #close flatM input bracket
                            
                            selectInput(
@@ -234,7 +261,7 @@ body <- dashboardBody(
                     column(4, 
                            selectInput(
                                width = "100%",
-                               "i_pred_NoS", label = "Number of Storey",
+                               "i_pred_NoS", label = "Storey Level",
                                choices = as.list(sort(inputC$storey_range))
                                #selected = "01 to 03"
                            ), #close NoS input bracket
@@ -245,7 +272,7 @@ body <- dashboardBody(
                                 label = HTML(paste0("Floor Area (m", tags$sup("2"), ")")),
                                 min = inputC$floor_area_sqm[1],
                                 max = inputC$floor_area_sqm[2], 
-                                value = mean(inputC$floor_area_sqm)
+                                value = floor(mean(inputC$floor_area_sqm))
                             ) #close floor area bracket 
                     ), #close 2nd column bracket
                     
@@ -255,7 +282,7 @@ body <- dashboardBody(
                             "i_pred_RLease", label = "Remaining Lease (year)",
                             min = inputC$remaining_lease[1],
                             max = inputC$remaining_lease[2],
-                            value = mean(inputC$remaining_lease)
+                            value = floor(mean(inputC$remaining_lease))
                         ) #close RLease bracket 
                     )
                     
@@ -265,6 +292,7 @@ body <- dashboardBody(
                 fluidRow(
                     column(12, align="right",
                         actionButton("i_pred_resetbut",
+                            style= "background-color: #808080;",
                             label = "Reset",
                             width = "100px", color = "blue"
                         ), #close reset button input bracket
@@ -283,8 +311,11 @@ body <- dashboardBody(
             
             #################### results box
             box(title="Results", width = 12, height = 300,
-                collapsible = FALSE,
-                textOutput("o_pred_res")
+                solidHeader = TRUE, collapsible = FALSE,
+                status = "success",
+                verbatimTextOutput("o_pred_res_para"),
+                h3('Predicted Current Price:'),
+                verbatimTextOutput("o_pred_res_price")
             ), #close results box bracket
             #to fix background color
             br(),
@@ -298,7 +329,8 @@ body <- dashboardBody(
             if (appdone==FALSE) {constructionbox},
             
             box(title = "Dataset", width = 12,
-                collapsible = FALSE,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "info",
                 "The prediction model is trained using the", 
                 tags$a(href="https://data.gov.sg/dataset/resale-flat-prices",
                        "open dataset", target = "_blank"), 
@@ -307,17 +339,20 @@ body <- dashboardBody(
             ),# close dataset box bracket
             
             box(title = "Data Attributes", width = 12,
-                collapsible = FALSE,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "info",
                 "Hello."
             ),# close data attr box bracket
             
             box(title = "Acknowledgement", width = 12,
-                collapsible = FALSE,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "info",
                 "Thank you all"
             ),# close ack box bracket
             
             box(title = "About Us", width = 12,
-                collapsible = FALSE,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "info",
                 "We are 5 smart PG students", br(),
                 "Github repo here?"
             )# close ack box bracket
@@ -339,24 +374,22 @@ body <- dashboardBody(
                         tags$a(href="https://getbootstrap.com/docs/3.4/components/#glyphicons",
                                "Link to full icon list")
                              
-                    ),#close icon box bracket
+                    )#close icon box bracket
                 
-                    box(title="Theme and colors", width=12,
-                        collapsible = TRUE,
-                        "including change bg color for button like 'reset' ",
-                        "in prediction tab"
-                        
-                    )#close theme box bracket
                 ),
                 
                 column(6,
                     box(title = "Others", width=12,
                         tags$ul(
-                            tags$li("town lat lng"),
-                            tags$li("reverse geocoding algorithm"),
                             tags$li("Location availability logic?"),
                             tags$li("reset button update inputs"),
-                            tags$li("slow problem?")
+                            tags$li("modal problem?"),
+                            tags$li("Colorrrrrrrrrr"),
+                            tags$li("Visualisation deco"),
+                            tags$li("Prediction tab feature"),
+                            tags$li("num var in pred, allowed range?"),
+                            tags$li("rem lease in year or month?"),
+                            tags$li("Englishhhhhhhh")
                         )
                     )
                 )

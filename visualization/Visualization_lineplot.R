@@ -1,6 +1,7 @@
 library(shiny)
 library(ggplot2)
 library(stringr)
+library(dplyr)
 
 data <- read.csv("../data/data_clean.csv", header = TRUE, sep = ",")
 

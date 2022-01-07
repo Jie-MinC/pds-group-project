@@ -6,6 +6,7 @@ library(dplyr)
 library(ggplot2)
 library(plotly)
 library(leaflet)
+library(lubridate)
 
 # For UI use --------------------------------------------------------------
 
@@ -22,6 +23,7 @@ load(file = "www/TownData.RData")
 #ghurl<- 'https://media.githubusercontent.com/media/yongkokkhuen/pds-group-project/main/data/data_clean.csv'
 #cleancsv<- data.frame(read_csv(ghurl))
 cleancsv<- data.frame(read_csv("www/data_clean.csv"))
+cleancsv<- cleancsv %>% mutate(RP_in_k= resale_price/1000)
 
 # open street map api
 osmapi<- c("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=",
@@ -55,23 +57,3 @@ geodist<- function(lat1, lng1, lat2, lng2){
   
   return(dist)
 }
-
-#Visualisation tab plotting
-areaplot<- cleancsv %>% 
-  ggplot(aes(x=floor_area_sqm, y=resale_price, color = region)) +
-  geom_point() +
-  scale_color_brewer(type = "qual", palette = 5)
-
-regplot<- cleancsv %>% 
-  ggplot(aes(x=region,y=resale_price, fill = region)) + theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  geom_violin() + geom_boxplot(width = 0.1) + theme(legend.position="none")+
-  scale_color_brewer(type = "qual", palette = 5)
-
-nfmplot<- cleancsv %>%
-  ggplot(aes(x=resale_price, fill = new_flat_model)) + theme_bw() +
-  theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
-  geom_density(alpha=0.5)  
-
-#nfmggplotly<-ggplotly(nfmplot)
-#rm(nfmplot)

@@ -2,24 +2,26 @@ library(readr)
 
 
 cleancsv<- data.frame(read_csv("www/data_clean.csv"))
-cleancsv["block"]<- as.numeric(unlist(cleancsv["block"]))
 
 inputC <- list()
 inputC$year<- unique(cleancsv$year)
 
-for (catvar in c("region","town", "street_name", 
-                 "new_flat_model", "storey_range", "flat_type")){
+for (catvar in c("town", "street_name",  "flat_type",
+                 "storey_range", "flat_model", "region")){
   inputC[catvar]<- unique(cleancsv[catvar])
 }
 
 inputC$block<- c(min(cleancsv["block"]),max(cleancsv["block"]))
-inputC$remaining_lease<- c(min(cleancsv["remaining_lease"]),max(cleancsv["remaining_lease"]))
 inputC$floor_area_sqm<- c(min(cleancsv["floor_area_sqm"]),max(cleancsv["floor_area_sqm"]))
+inputC$remaining_lease<- c(floor(min(cleancsv["remaining_lease"])/12),
+                           floor(max(cleancsv["remaining_lease"])/12))
+
+
+
 inputC$attChoices<-list("Region" = "region",
                  "Town" = "town",
-                 "Street Name" = "street_name",
                  "Flat Type" = "flat_type",
-                 "Flat Model" = "new_flat_model")
+                 "Flat Model" = "flat_model")
 
 CentralT<- c("BUKIT MERAH","BUKIT TIMAH","GEYLANG","TOA PAYOH", "BISHAN",
              "KALLANG/WHAMPOA","MARINE PARADE", "CENTRAL AREA", "QUEENSTOWN")
