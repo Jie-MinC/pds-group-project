@@ -1,0 +1,66 @@
+---
+title: "Predict Using Final Model"
+output: html_notebook
+---
+
+## Read
+
+```{r}
+# 1. Load final model
+model <- readRDS("../model/rf_model.rds")
+
+# 2. Load levels (if required)
+lvl_flat_model <- readRDS("../model/lvl_flat_model.rds")
+lvl_flat_type <- readRDS("../model/lvl_flat_type.rds")
+lvl_storey_range <- readRDS("../model/lvl_storey_range.rds")
+lvl_town <- readRDS("../model/lvl_town.rds")
+```
+
+## Inputs
+
+```{r}
+# 3. Obtain from user inputs
+town <- "ANG MO KIO"
+flat_type <- "4 ROOM"
+storey_range <- "10 TO 12"
+floor_area_sqm <- 98
+flat_model <- "New Generation"
+remaining_lease <- 678
+max_floor_lvl <- 11
+commercial <- 1
+market_hawker <- 0
+miscellaneous <- 0
+multistorey_carpark <- 0
+precinct_pavilion <- 0
+```
+
+```{r}
+# 4. Create a dataframe
+df_input <- data.frame(town, flat_type, storey_range, floor_area_sqm, flat_model, remaining_lease, max_floor_lvl, commercial, market_hawker, miscellaneous, multistorey_carpark, precinct_pavilion)
+```
+
+```{r}
+# Dataframe should look like this
+df_input
+```
+
+```{r}
+# 5. Convert to factors
+df_input$town <- factor(df_input$town, levels = lvl_town)
+df_input$flat_type <- factor(df_input$flat_type, levels = lvl_flat_type)
+df_input$storey_range <- factor(df_input$storey_range, levels = lvl_storey_range)
+df_input$flat_model <- factor(df_input$flat_model, levels = lvl_flat_model)
+```
+
+```{r}
+# Structure should look like this
+str(df_input)
+```
+
+## Prediction
+
+```{r}
+# 6. Make prediction
+pred <- predict(model, newdata = df_input)
+pred
+```

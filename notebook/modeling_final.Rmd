@@ -1,0 +1,97 @@
+---
+title: "Final Model"
+output: html_notebook
+---
+
+## Imports
+
+```{r}
+library(dplyr)
+library(randomForest)
+```
+
+## Preparation
+
+```{r}
+df <- read.csv("../data/data_clean.csv", stringsAsFactors = TRUE)
+df$year <- factor(df$year)
+df$month <- factor(df$month)
+df$block <- factor(df$block)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+colnames(df)
+```
+
+```{r}
+all_columns <- colnames(df)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+```
+
+```{r}
+train_data <- df %>% select(all_of(selected_columns))
+head(train_data)
+```
+
+## Modeling
+
+```{r}
+model <- randomForest(resale_price ~ ., data = train_data, ntree = 100)
+```
+
+```{r}
+print(model)
+```
+
+```{r}
+plot(model)
+```
+
+```{r}
+pred <- predict(model, train_data)
+```
+
+```{r}
+mae <- mean(abs(train_data$resale_price - pred))
+mse <- mean((train_data$resale_price - pred)^2)
+rmse <- sqrt(mse)
+
+sse <- sum((train_data$resale_price - pred)^2)
+sst <- sum((train_data$resale_price - mean(train_data$resale_price))^2)
+rsq <- 1 - (sse / sst)
+
+data.frame(MAE = mae, MSE = mse, RMSE = rmse, "R-squared" = rsq)
+```
+
+## Save
+
+```{r}
+saveRDS(model, "../model/rf_model.rds")
+```
+
+```{r}
+saveRDS(levels(train_data$town), "../model/lvl_town.rds")
+```
+
+```{r}
+saveRDS(levels(train_data$flat_type), "../model/lvl_flat_type.rds")
+```
+
+```{r}
+saveRDS(levels(train_data$storey_range), "../model/lvl_storey_range.rds")
+```
+
+```{r}
+saveRDS(levels(train_data$flat_model), "../model/lvl_flat_model.rds")
+```
+
