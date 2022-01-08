@@ -7,7 +7,7 @@ output: html_notebook
 
 ```{r}
 library(dplyr)
-library(glmnet)
+library(ggplot2)
 ```
 
 ```{r}
@@ -55,86 +55,83 @@ get_metrics <- function(y_actual, y_predict) {
   mae <- mean(abs(y_actual - y_predict))
   mse <- mean((y_actual - y_predict)^2)
   rmse <- sqrt(mse)
-  
+
   sse <- sum((y_actual - y_predict)^2)
   sst <- sum((y_actual - mean(y_actual))^2)
   rsq <- 1 - (sse / sst)
-  
+
   metrics <- data.frame(MAE = mae, MSE = mse, RMSE = rmse, "R-squared" = rsq)
-  return (metrics)
+  return(metrics)
 }
+```
+
+```{r}
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
 ```
 
 ## Linear Regression
 
 ```{r}
-library(stats)
 set.seed(101)
-
-
-all_columns <- colnames(train_set)
-excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
-selected_columns <- all_columns[!all_columns %in% excluded_columns]
-selected_columns
 
 reg_train_set <- train_set %>% select(all_of(selected_columns))
 reg_test_set <- test_set %>% select(all_of(selected_columns))
 
-  
-reg_model = lm(resale_price ~.,data = reg_train_set)
-
+reg_model <- lm(resale_price ~ ., data = reg_train_set)
 ```
 
 ```{r}
 summary(reg_model)
-
 ```
 
 ```{r}
-reg_pred <- predict(reg_model,newdata = reg_test_set)
+reg_pred <- predict(reg_model, newdata = reg_test_set)
 ```
 
 ```{r}
-reg_metrics = get_metrics(reg_test_set$resale_price ,reg_pred)
+reg_metrics <- get_metrics(reg_test_set$resale_price, reg_pred)
 reg_metrics
 ```
+
 ## Polynomial Regression
 
 ```{r}
-library(caTools)
-library(ggplot2)
+head(reg_test_set)
+```
 
+
+```{r}
 set.seed(101)
 
 p_reg_train_set <- train_set %>% select(all_of(selected_columns))
 p_reg_test_set <- test_set %>% select(all_of(selected_columns))
 
-  
+
 degree_list <- 2:10
 rmse_train_list <- numeric()
 rmse_test_list <- numeric()
 
 for (i in degree_list) {
-# raw = TRUE means not orthogonal polynomials
-model <- lm(resale_price ~ polym(floor_area_sqm,  remaining_lease, max_floor_lvl, degree = i, raw = TRUE), data = p_reg_train_set)
-  
-pred_train <- predict(model, newdata = p_reg_train_set)
-rmse_train <- sqrt(mean((p_reg_train_set$resale_price - pred_train)^2))
-rmse_train_list <- c(rmse_train_list, rmse_train)
-  
-pred_test <- predict(model, newdata = p_reg_test_set)
-rmse_test <- sqrt(mean((p_reg_test_set$resale_price - pred_test)^2))
-rmse_test_list <- c(rmse_test_list, rmse_test)
+  # raw = TRUE means not orthogonal polynomials
+  model <- lm(resale_price ~ polym(floor_area_sqm, remaining_lease, max_floor_lvl, degree = i, raw = TRUE) + town + flat_type + storey_range + flat_model + commercial + market_hawker + miscellaneous + multistorey_carpark + precinct_pavilion, data = p_reg_train_set)
+
+  pred_train <- predict(model, newdata = p_reg_train_set)
+  rmse_train <- sqrt(mean((p_reg_train_set$resale_price - pred_train)^2))
+  rmse_train_list <- c(rmse_train_list, rmse_train)
+
+  pred_test <- predict(model, newdata = p_reg_test_set)
+  rmse_test <- sqrt(mean((p_reg_test_set$resale_price - pred_test)^2))
+  rmse_test_list <- c(rmse_test_list, rmse_test)
 }
 
 
 print(c("RMSE (Train):", rmse_train_list))
-```
-```{r}
+
 print(c("RMSE (Test):", rmse_test_list))
 
-```
-```{r}
 rmse_compare <- data.frame(
   degree = degree_list,
   train = rmse_train_list,
@@ -153,17 +150,18 @@ ggplot(aes(x = degree), data = rmse_compare) +
 
 
 ```{r}
-# Choose degree = ?, seems like higher better
-poly_reg_model <- lm(resale_price ~ polym(floor_area_sqm,  remaining_lease, max_floor_lvl, degree = 7, raw = TRUE)+., data = p_reg_train_set)
+# Choose degree = 5 to avoid overfitting
+poly_reg_model <- lm(resale_price ~ polym(floor_area_sqm, remaining_lease, max_floor_lvl, degree = 5, raw = TRUE) + town + flat_type + storey_range + flat_model + commercial + market_hawker + miscellaneous + multistorey_carpark + precinct_pavilion, data = p_reg_train_set)
+
 summary(poly_reg_model)
 ```
 
 ```{r}
-p_reg_pred <- predict(poly_reg_model,newdata = p_reg_test_set)
+p_reg_pred <- predict(poly_reg_model, newdata = p_reg_test_set)
 ```
 
 ```{r}
-p_reg_metrics = get_metrics(p_reg_test_set$resale_price ,p_reg_pred)
+p_reg_metrics <- get_metrics(p_reg_test_set$resale_price, p_reg_pred)
 p_reg_metrics
 ```
 
@@ -175,226 +173,46 @@ library(forecast)
 ```
 
 ```{r}
-data = df
+data <- df
 
-data$date <- as.Date(with(data, paste(year, month, 1, sep ="-")), "%Y - %m - %d")
+data$date <- as.Date(with(data, paste(year, month, 1, sep = "-")), "%Y - %m - %d")
 
-ts.data = data %>%group_by(date) %>% summarise(mean_resale_price= mean(resale_price))
+ts.data <- data %>%
+  group_by(date) %>%
+  summarise(mean_resale_price = mean(resale_price))
 head(ts.data)
 
 ts.data %>%
   ggplot(aes(x = date, y = mean_resale_price)) +
-      geom_point(color = "darkorchid4") +
-      labs(title = "Monthly resale price",
-           y = "Resale Price",
-           x = "Date") + theme_bw(base_size = 15)
-
-
-
+  geom_point(color = "darkorchid4") +
+  labs(
+    title = "Monthly resale price",
+    y = "Resale Price",
+    x = "Date"
+  ) +
+  theme_bw(base_size = 15)
 ```
 
 ```{r}
-ts_train_set <- ts.data %>% filter(date <'2021-01-01')
-ts_test_set <- ts.data %>% filter(date >= '2021-01-01')
+ts_train_set <- ts.data %>% filter(date < "2021-01-01")
+ts_test_set <- ts.data %>% filter(date >= "2021-01-01")
 
-ts.train_set =  ts(ts_train_set[,c('mean_resale_price')])
-ts.test_set =   ts(ts_test_set[,c('mean_resale_price')])
+ts.train_set <- ts(ts_train_set[, c("mean_resale_price")])
+ts.test_set <- ts(ts_test_set[, c("mean_resale_price")])
 ```
 
 ```{r}
 set.seed(101)
-ts.model = auto.arima(ts.train_set)
+ts.model <- auto.arima(ts.train_set)
 ts.model
-
 ```
 ```{r}
-ts_pred <- forecast(ts.model,h = 12)
+ts_pred <- forecast(ts.model, h = 12)
 ```
 
 ```{r}
-ts_metrics = get_metrics(ts.test_set ,ts_pred$residuals)
+ts_metrics <- get_metrics(ts.test_set, ts_pred$residuals)
 ts_metrics
-```
-## Data Transformation for glmnet
-
-To use `glmnet` for Lasso, Ridge and Elastic Net, data has to be split into features (matrix) and label.
-
-Label:
-`resale_price`
-
-Features:
-`town`, `block`, `street_name`, `flat_type`, `storey_range`, `floor_area_sqm`, `new_flat_model`, `remaining_lease`
-
-Notes:
-
-- `year` is only for train-test split.
-- `month` is not considered as the transactions are uniform throughout the year.
-- `flat_model` is replaced by `new_flat_model`.
-- `region` is too general for modeling.
-- `price_per_sqm` is only for analysis.
-
-```{r}
-# Helper function to scale floor_area_sqm to z-score
-scale_floor_area_sqm <- function(floor_area_sqm) {
-  mean_floor_area_sqm <- mean(train_set$floor_area_sqm)
-  std_floor_area_sqm <- sd(train_set$floor_area_sqm)
-  z_score <- (floor_area_sqm - mean_floor_area_sqm) / std_floor_area_sqm
-  return (z_score)
-}
-```
-
-```{r}
-# Helper function to scale remaining_lease to z-score
-scale_remaining_lease <- function(remaining_lease) {
-  mean_remaining_lease <- mean(train_set$remaining_lease)
-  std_remaining_lease <- sd(train_set$remaining_lease)
-  z_score <- (remaining_lease - mean_remaining_lease) / std_remaining_lease
-  return (z_score)
-}
-```
-
-```{r}
-# "g_" prefix is used for glmnet related variables to avoid naming conflicts
-g_features <- c("town", "block", "street_name", "flat_type", "storey_range", "floor_area_sqm", "new_flat_model", "remaining_lease")
-
-# Select features, scale and perform one-hot encoding
-g_X_train_temp <- train_set %>% select(all_of(g_features))
-g_X_train_temp$floor_area_sqm <- scale_floor_area_sqm(g_X_train_temp$floor_area_sqm)
-g_X_train_temp$remaining_lease <- scale_remaining_lease(g_X_train_temp$remaining_lease)
-g_X_train <- model.matrix(~ ., g_X_train_temp)[,-1]
-
-g_X_test_temp <- test_set %>% select(all_of(g_features))
-g_X_test_temp$floor_area_sqm <- scale_floor_area_sqm(g_X_test_temp$floor_area_sqm)
-g_X_test_temp$remaining_lease <- scale_remaining_lease(g_X_test_temp$remaining_lease)
-g_X_test <- model.matrix(~ ., g_X_test_temp)[,-1]
-
-# Select label
-g_y_train <- train_set$resale_price
-g_y_test <- test_set$resale_price
-```
-
-## Lasso Regression (L1 Regularization)
-
-```{r}
-set.seed(101)
-lasso_model <- cv.glmnet(g_X_train, g_y_train, alpha = 1, type.measure = "mse", family = "gaussian")
-```
-
-```{r}
-summary(lasso_model)
-```
-
-```{r}
-# Best lambda value
-lasso_model$lambda.1se
-```
-
-```{r}
-lasso_y_pred <- predict(lasso_model, newx = g_X_test, s = lasso_model$lambda.1se)
-```
-
-```{r}
-lasso_metrics <- get_metrics(g_y_test, lasso_y_pred)
-lasso_metrics
-```
-
-## Ridge Regression (L2 Regularization)
-
-```{r}
-set.seed(101)
-ridge_model <- cv.glmnet(g_X_train, g_y_train, alpha = 0, type.measure = "mse", family = "gaussian")
-```
-
-```{r}
-summary(ridge_model)
-```
-
-```{r}
-# Best lambda value
-ridge_model$lambda.1se
-```
-
-```{r}
-ridge_y_pred <- predict(ridge_model, newx = g_X_test, s = ridge_model$lambda.1se)
-```
-
-```{r}
-ridge_metrics <- get_metrics(g_y_test, ridge_y_pred)
-ridge_metrics
-```
-
-## Elastic Net Regression
-
-```{r}
-# Experiment with a range of alpha values.
-set.seed(101)
-
-elastic_alpha_list <- c(0.1, 0.5, 0.7, 0.9, 0.95, 0.99, 1)
-elastic_lambda_list <- numeric()
-elastic_mse_list <- numeric()
-
-for (i in elastic_alpha_list) {
-  elastic_temp_model <- cv.glmnet(g_X_train, g_y_train, alpha = i, type.measure = "mse", family = "gaussian")
-  elastic_lambda_list <- c(elastic_lambda_list, elastic_temp_model$lambda.1se)
-  
-  elastic_temp_y_pred <- predict(elastic_temp_model, newx = g_X_test, s = elastic_temp_model$lambda.1se)
-  elastic_temp_mse <- mean((g_y_test - elastic_temp_y_pred)^2)
-  elastic_mse_list <- c(elastic_mse_list, elastic_temp_mse)
-}
-
-elastic_result <- data.frame(alpha = elastic_alpha_list, lambda = elastic_lambda_list, mse = elastic_mse_list)
-elastic_result
-```
-
-```{r}
-# Best alpha value
-elastic_min_mse <- elastic_result %>% filter(mse == min(mse))
-elastic_best_alpha <- elastic_min_mse$alpha
-elastic_best_alpha
-```
-
-Note: Best alpha value is 1, which indicates that Lasso is preferred in this case.
-
-```{r}
-# Create model with the best alpha value
-set.seed(101)
-elastic_model <- cv.glmnet(g_X_train, g_y_train, alpha = elastic_best_alpha, type.measure = "mse", family = "gaussian")
-```
-
-```{r}
-summary(elastic_model)
-```
-
-```{r}
-# Best lambda value
-elastic_model$lambda.1se
-```
-
-```{r}
-elastic_y_pred <- predict(elastic_model, newx = g_X_test, s = elastic_model$lambda.1se)
-```
-
-```{r}
-elastic_metrics <- get_metrics(g_y_test, elastic_y_pred)
-elastic_metrics
-```
-
-## Decision Tree Regression
-
-```{r}
-# TODO
-```
-
-## Random Forest Regression
-
-```{r}
-# TODO
-```
-
-## Support Vector Regression
-
-```{r}
-# TODO
 ```
 
 # Model Selection
@@ -402,8 +220,8 @@ elastic_metrics
 Compile metrics from all models.
 
 ```{r}
-model_names <- c("Lasso", "Ridge", "Elastic Net") # Add other model names here
-all_models <- rbind(lasso_metrics, ridge_metrics, elastic_metrics) # Add other metrics here
+model_names <- c("Linear", "Polynomial", "Time Series") # Add other model names here
+all_models <- rbind(reg_metrics, p_reg_metrics, ts_metrics) # Add other metrics here
 row.names(all_models) <- model_names
 all_models
 ```
@@ -413,10 +231,3 @@ Choose the model with highest R-squared value.
 ```{r}
 all_models %>% filter(R.squared == max(R.squared))
 ```
-
-Train and save the final model.
-
-```{r}
-# TODO
-```
-
