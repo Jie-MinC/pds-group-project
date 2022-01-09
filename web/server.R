@@ -12,6 +12,7 @@ library(shinyBS)
 library(plotly)
 library(jsonlite)
 library(leaflet)
+library(randomForest)
 
 # Inititation -------------------------------------------------------------
 #moved to global.R
@@ -243,7 +244,7 @@ shinyServer(function(input, output, session) {
         output$o_pred_map_loc<- renderText(paste(fLat,fLng, sep = " , "))
         
         output$o_pred_map_reg<- renderText({regtext})
-        updateSelectInput(session, "i_pred_region", selected = regtext)
+        #updateSelectInput(session, "i_pred_region", selected = regtext)
         
         output$o_pred_map_town<- renderText({towntext})
         updateSelectInput(session, "i_pred_town", selected = towntext)
@@ -252,27 +253,57 @@ shinyServer(function(input, output, session) {
     
     
     observeEvent(input$i_pred_predbut, {
+        town <- input$i_pred_town
+        flat_type <- input$i_pred_flatT
+        storey_range <- input$i_pred_SRange
+        floor_area_sqm <- input$i_pred_floorA
+        flat_model <- input$i_pred_flatM
+        remaining_lease <- input$i_pred_RLease *12
+        max_floor_lvl <- input$i_pred_maxF
+        commercial <- as.numeric(input$i_pred_com)
+        market_hawker <- as.numeric(input$i_pred_mh)
+        miscellaneous <- as.numeric(input$i_pred_misc)
+        multistorey_carpark <- as.numeric(input$i_pred_carp)
+        precinct_pavilion <- as.numeric(input$i_pred_ppav)
+        
+        df_input<-data.frame(town,
+                             flat_type, storey_range, floor_area_sqm, 
+                             flat_model, remaining_lease, max_floor_lvl, 
+                             commercial, market_hawker, miscellaneous, 
+                             multistorey_carpark, precinct_pavilion)
+        
+        df_input$town <- factor(df_input$town, levels = lvl_town)
+        df_input$flat_type <- factor(df_input$flat_type, levels = lvl_flat_type)
+        df_input$storey_range <- factor(df_input$storey_range, levels = lvl_storey_range)
+        df_input$flat_model <- factor(df_input$flat_model, levels = lvl_flat_model)
+        
+        predprice<- predict(predmodel, newdata=df_input)
+        #output$o_pred_res_table<- renderDataTable(df_input)
+        
         output$o_pred_res_para<- renderText({
-            outputtext<- isolate (
-                { paste(
-                    "Location", " \n",
-                    "Region: ", input$i_pred_region, ",   ",
-                    "Town: ", input$i_pred_town, ",   ",
-                    "Street Name: ", input$i_pred_streetN, ",   ",
-                    "Block: ", toString(input$i_pred_block), ". \n",
-                    "Flat Feature", " \n",
-                    "Flat Model: ", input$i_pred_flatM, ",   ",
-                    "Storey Level: ", input$i_pred_NoS, ",   ",
-                    "Remaining Lease (year): ", input$i_pred_RLease, ",   ",
-                    "Flat Type: ", input$i_pred_flatT, ",   ",
-                    "Floor Area: ", input$i_pred_floorA,  ". \n",
-                    sep = "")}
-            )
-            outputtext
+            paste("Town: ", town, ". \n",
+                  "Flat Feature: ", "\n",
+                  "Flat Model: ", flat_model, ",   ",
+                  "Max Floor Level: ", max_floor_lvl, ",   ",
+                  "Storey Range: ", storey_range, ", \n",
+                  "Flat Type: ", flat_type, ",   ",
+                  "Floor Area (sqm): ", floor_area_sqm, ",   ",
+                  "Remaining Lease (year): ", remaining_lease, ". \n",
+                  "Others: ", "\n",
+                  "Commercial: ", commercial, ",   ",
+                  "Market Hawker: ", market_hawker, ",   ",
+                  "Miscellaneous: ", miscellaneous, ",   ",
+                  "Multi Storey Car Park: ", multistorey_carpark, ",   ",
+                  "Precinct Pavillion: ", precinct_pavilion, ".",
+                  sep="")
         }) #close render result para bracket
         
+        
+        
+        
+        
         output$o_pred_res_price<- renderText({
-            "66666666666666666"
+            predprice
         })
         
     }) #close observe predbut bracket

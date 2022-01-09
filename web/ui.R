@@ -84,7 +84,7 @@ body <- dashboardBody(
                 selected = "Trend",
                 
                 tabPanel("Trend", 
-                    style= "background-color: #808080;",
+                    #style= "background-color: #808080;",
                     fluidRow(
                         column(3, 
                             selectInput("i_vis_trend_reg", label = "Region",
@@ -169,7 +169,8 @@ body <- dashboardBody(
             br(),
             
             ########### direct to predict
-            actionButton("i_vis_direct", label = "Click here"),
+            actionButton("i_vis_direct", label = "Click here",
+                         style= "background-color: #FFFFFF; color: #0645AD"),
             "to find out the estimated price for your dream home!"
         ), #close vis tabItem bracket
         
@@ -188,28 +189,10 @@ body <- dashboardBody(
                 solidHeader = TRUE, collapsible = FALSE,
                 status = "warning",
                 
-                ############### 1st row for location
+                ############### 1st row for town
                 fluidRow(
                     
-                    column(12, h3("Location:")),
-                    
-                    column(5, 
-                        selectInput(
-                            width = "100%",
-                            "i_pred_region", label = "Region",
-                            choices = as.list(sort(inputC$region))
-                            #selected = "North"
-                        ), #close region input bracket
-                        
-                        selectInput( 
-                            width = "100%",
-                            "i_pred_streetN", label = "Street Name",
-                            choices = as.list(sort(inputC$street_name))
-                            #selected = "Road 01"
-                        ) #close streetN input bracket
-                    ), #close 1st column bracket
-                    
-                    
+                
                     column(5,
                         selectInput(
                             width = "100%",
@@ -217,15 +200,8 @@ body <- dashboardBody(
                             choices = as.list(sort(inputC$town))
                             #selected = "Bedok"
                         ), #close town input bracket
-                        
-                        numericInput(
-                            width = "50%",
-                            "i_pred_block", label = "Block Number",
-                            min=inputC$block[1], 
-                            max = inputC$block[2], 
-                            value= floor(mean(inputC$block)), step = 1
-                        ) #close block input bracket
-                    ), #close 2nd column bracket
+
+                    ),
                     
                     column(2,
                            actionButton("i_pred_mapbut",
@@ -234,8 +210,7 @@ body <- dashboardBody(
                            ) #close map button input bracket
                     )#close map col
                     
-
-                ), #close location row bracket
+                ), #close town row bracket
                 
                 ############### 2nd row for flat features  
                 
@@ -259,12 +234,14 @@ body <- dashboardBody(
                     ), #close 1st column bracket
                     
                     column(4, 
-                           selectInput(
+                           numericInput(
                                width = "100%",
-                               "i_pred_NoS", label = "Storey Level",
-                               choices = as.list(sort(inputC$storey_range))
-                               #selected = "01 to 03"
-                           ), #close NoS input bracket
+                               "i_pred_maxF", 
+                               label = "Max Floor Level",
+                               min = inputC$max_floor_lvl[1],
+                               max = inputC$max_floor_lvl[2], 
+                               value = floor(mean(inputC$max_floor_lvl))
+                           ), #close maxF bracket
                            
                            sliderInput(
                                 width = "100%",
@@ -277,6 +254,12 @@ body <- dashboardBody(
                     ), #close 2nd column bracket
                     
                     column (4,
+                        selectInput(
+                            width = "100%",
+                            "i_pred_SRange", label = "Storey Range",
+                            choices = as.list(sort(inputC$storey_range))
+                            #selected = "01 to 03"
+                        ), #close SRange input bracket
                         sliderInput(
                             width = "100%",
                             "i_pred_RLease", label = "Remaining Lease (year)",
@@ -284,9 +267,35 @@ body <- dashboardBody(
                             max = inputC$remaining_lease[2],
                             value = floor(mean(inputC$remaining_lease))
                         ) #close RLease bracket 
-                    )
+                    ) # close 3rd col
                     
-                ),# close 2nd row bracket
+                ),# close flat feature row bracket
+                
+                
+                fluidRow(
+                    
+                    column(12, h3("Others:")),
+                    
+                    column(2,
+                        checkboxInput("i_pred_com", label = "Commercial", value = TRUE),
+                    ),
+                    
+                    column(2,
+                        checkboxInput("i_pred_mh", label = "Market Hawker", value = TRUE),
+                    ),
+                    
+                    column(2,
+                        checkboxInput("i_pred_misc", label = "Miscellaneous", value = TRUE),
+                    ),
+                    
+                    column(3,
+                        checkboxInput("i_pred_carp", label = "Multi Storey Car Park", value = TRUE),
+                    ),
+                    
+                    column(2,
+                        checkboxInput("i_pred_ppav", label = "Precinct Pavillion", value = TRUE),
+                    )
+                ),
                 
                 ############### last row for button
                 fluidRow(
@@ -313,6 +322,7 @@ body <- dashboardBody(
             box(title="Results", width = 12, height = 300,
                 solidHeader = TRUE, collapsible = FALSE,
                 status = "success",
+                #dataTableOutput("o_pred_res_table"),
                 verbatimTextOutput("o_pred_res_para"),
                 h3('Predicted Current Price:'),
                 verbatimTextOutput("o_pred_res_price")
@@ -380,17 +390,33 @@ body <- dashboardBody(
                 
                 column(6,
                     box(title = "Others", width=12,
+                        
+                        "General",
                         tags$ul(
-                            tags$li("Location availability logic?"),
+                            tags$li("remove redundant data in inputC"),
+                            tags$li("remove redundant data in global.R"),
+                            tags$li("Colorrrrrrrrrr"),
+                            tags$li("Englishhhhhhhh")
+                        ),
+                        
+                        "Visualisation tab:",
+                        tags$ul(
+                            tags$li("Visualisation deco"),
+                            tags$li("keep region in vis?")
+                        ),
+                        
+                        "Prediction tab:",
+                        tags$ul(
                             tags$li("reset button update inputs"),
                             tags$li("modal problem?"),
-                            tags$li("Colorrrrrrrrrr"),
-                            tags$li("Visualisation deco"),
-                            tags$li("Prediction tab feature"),
+                            tags$li("remove est. reg. in map"),
                             tags$li("num var in pred, allowed range?"),
+                            tags$li("explain pred feature?"),
+                            tags$li("max floor level range?"),
                             tags$li("rem lease in year or month?"),
-                            tags$li("Englishhhhhhhh")
+                            tags$li("rem lease in res para")
                         )
+                        
                     )
                 )
                 

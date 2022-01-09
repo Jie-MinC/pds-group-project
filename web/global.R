@@ -29,6 +29,13 @@ cleancsv<- cleancsv %>% mutate(RP_in_k= resale_price/1000)
 osmapi<- c("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=",
            "&lon=")
 
+# load prediction model
+predmodel <- readRDS("www/rf_model.rds")
+lvl_flat_model <- readRDS("www/lvl_flat_model.rds")
+lvl_flat_type <- readRDS("www/lvl_flat_type.rds")
+lvl_storey_range <- readRDS("www/lvl_storey_range.rds")
+lvl_town <- readRDS("www/lvl_town.rds")
+
 #leaflet map
 SgMap<- leaflet(data=TownData, options = leafletOptions(zoomSnap = 0.5, zoomDelta=0.5)) %>% 
   addProviderTiles(providers$OneMapSG.Original, 
