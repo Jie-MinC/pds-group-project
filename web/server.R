@@ -205,11 +205,15 @@ shinyServer(function(input, output, session) {
             footer = modalButton("Confirm")
         )
         )
+        
+        output$o_pred_map<- renderLeaflet({
+            SgMap
+        }) #close render Leaflet
     })
     
-    output$o_pred_map<- renderLeaflet({
-        SgMap
-    }) #close render Leaflet
+    #output$o_pred_map<- renderLeaflet({
+    #    SgMap
+    #}) #close render Leaflet
     
     observeEvent(input$o_pred_map_click, {
         
@@ -278,41 +282,93 @@ shinyServer(function(input, output, session) {
         df_input$flat_model <- factor(df_input$flat_model, levels = lvl_flat_model)
         
         predprice<- predict(predmodel, newdata=df_input)
+        
         #output$o_pred_res_table<- renderDataTable(df_input)
         
-        output$o_pred_res_para<- renderText({
-            paste("Town: ", town, ". \n",
-                  "Flat Feature: ", "\n",
-                  "Flat Model: ", flat_model, ",   ",
-                  "Max Floor Level: ", max_floor_lvl, ",   ",
-                  "Storey Range: ", storey_range, ", \n",
-                  "Flat Type: ", flat_type, ",   ",
-                  "Floor Area (sqm): ", floor_area_sqm, ",   ",
-                  "Remaining Lease (year): ", remaining_lease, ". \n",
-                  "Others: ", "\n",
-                  "Commercial: ", commercial, ",   ",
-                  "Market Hawker: ", market_hawker, ",   ",
-                  "Miscellaneous: ", miscellaneous, ",   ",
-                  "Multi Storey Car Park: ", multistorey_carpark, ",   ",
-                  "Precinct Pavillion: ", precinct_pavilion, ".",
-                  sep="")
-        }) #close render result para bracket
+        output$o_pred_param_title<-renderText({
+            "Flat Details:"
+        })
         
+        output$o_pred_param_town<-renderText({
+            paste("Town: ", town, ".", sep = "")
+        })
         
+        output$o_pred_param_ff0<-renderText({
+            "Flat Feature:"
+        })
         
+        output$o_pred_param_ff1<-renderText({
+            paste( "Flat Model: ", flat_model, ",   ",
+                   "Max Floor Level: ", max_floor_lvl, ",   ",
+                   "Storey Range: ", storey_range, ",",
+                   sep = "")
+        })
+        
+        output$o_pred_param_ff2<-renderText({
+            paste( "Flat Type: ", flat_type, ",   ",
+                   "Floor Area (sqm): ", floor_area_sqm, ",   ",
+                   "Remaining Lease (year): ", remaining_lease, ".", 
+                   sep = "")
+        })
+        
+        output$o_pred_param_oth0<-renderText({
+            "Others:"
+        })
+        
+        output$o_pred_param_oth1<-renderText({
+            paste( "Commercial: ", commercial, ",   ",
+                   "Market Hawker: ", market_hawker, ",   ",
+                   "Miscellaneous: ", miscellaneous, ",   ",
+                   "Multi Storey Car Park: ", multistorey_carpark, ",   ",
+                   "Precinct Pavillion: ", precinct_pavilion, ".",
+                   sep = "")
+        })
         
         
         output$o_pred_res_price<- renderText({
-            predprice
+            paste('Predicted Current Price: ', 
+                  toString(round(predprice, digits=2)),
+                  " S$",
+                  sep="")
         })
         
     }) #close observe predbut bracket
     
     observeEvent(input$i_pred_resetbut, {
-        updateSelectInput(session, "i_pred_region",selected="Central")
-        ########more updates here
-        output$o_pred_res_para<- renderText({""
+        updateSelectInput(session, "i_pred_town", selected=head(sort(inputC$town),1))
+        
+        updateSelectInput(session, "i_pred_flatM", selected=head(sort(inputC$flat_model),1))
+        updateNumericInput(session, "i_pred_maxF", value = floor(mean(inputC$max_floor_lvl)))
+        updateSelectInput(session, "i_pred_SRange", selected=head(sort(inputC$storey_range),1))
+        
+        updateSelectInput(session, "i_pred_flatT", selected=head(sort(inputC$flat_type),1))
+        updateSliderInput(session, "i_pred_floorA", value = floor(mean(inputC$floor_area_sqm)))
+        updateSliderInput(session, "i_pred_RLease", value = floor(mean(inputC$remaining_lease)))
+        
+        updateCheckboxInput(session, "i_pred_com", value = TRUE)
+        updateCheckboxInput(session, "i_pred_mh", value = TRUE)
+        updateCheckboxInput(session, "i_pred_misc", value = TRUE)
+        updateCheckboxInput(session, "i_pred_carp", value = TRUE)
+        updateCheckboxInput(session, "i_pred_ppav", value = TRUE)
+        
+        output$o_pred_param_title<- renderText({""
         }) 
+        output$o_pred_param_town<- renderText({""
+        }) 
+        output$o_pred_param_ff0<- renderText({""
+        }) 
+        output$o_pred_param_ff1<- renderText({""
+        }) 
+        output$o_pred_param_ff2<- renderText({""
+        }) 
+        output$o_pred_param_oth0<- renderText({""
+        }) 
+        output$o_pred_param_oth1<- renderText({""
+        }) 
+        
+        
+        
+        
         output$o_pred_res_price<- renderText({""
         }) 
     }) #close observe resetbut bracket

@@ -204,6 +204,7 @@ body <- dashboardBody(
                     ),
                     
                     column(2,
+                           style = "margin-top: 25px;",
                            actionButton("i_pred_mapbut",
                                 width = "100%",
                                 label = "Use Map"
@@ -323,9 +324,16 @@ body <- dashboardBody(
                 solidHeader = TRUE, collapsible = FALSE,
                 status = "success",
                 #dataTableOutput("o_pred_res_table"),
-                verbatimTextOutput("o_pred_res_para"),
-                h3('Predicted Current Price:'),
-                verbatimTextOutput("o_pred_res_price")
+                
+                h3(textOutput("o_pred_param_title")),
+                textOutput("o_pred_param_town"),
+                textOutput("o_pred_param_ff0"),
+                textOutput("o_pred_param_ff1"),
+                textOutput("o_pred_param_ff2"),
+                textOutput("o_pred_param_oth0"),
+                textOutput("o_pred_param_oth1"),
+                
+                h3(textOutput("o_pred_res_price"))
             ), #close results box bracket
             #to fix background color
             br(),
@@ -408,13 +416,14 @@ body <- dashboardBody(
                         "Prediction tab:",
                         tags$ul(
                             tags$li("reset button update inputs"),
-                            tags$li("modal problem?"),
-                            tags$li("remove est. reg. in map"),
+                            tags$li("map modal tidy up"),
+                            tags$li("remove est. reg. in map modal"),
                             tags$li("num var in pred, allowed range?"),
                             tags$li("explain pred feature?"),
                             tags$li("max floor level range?"),
                             tags$li("rem lease in year or month?"),
-                            tags$li("rem lease in res para")
+                            tags$li("rem lease in res para"),
+                            tags$li("result box param display")
                         )
                         
                     )
