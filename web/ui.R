@@ -4,26 +4,23 @@
 # tabName = "tab_{tabname}"
 # id for inputs: "i_{tabname}_{id}"
 # id for outputs: "o_{tabname}_{id}"
-# change appdone<- TRUE in Initiation section to remove construction box
+# change appdone<- TRUE in global.R to remove construction box
 
 
 # Library -----------------------------------------------------------------
 library(shiny)
 library(shinydashboard)
 library(dashboardthemes)
-library(shinyjs)
 library(shinyBS)
-library(plotly)
 library(leaflet)
 
 # Initiation --------------------------------------------------------------
-# moved to global.R
+# most moved to global.R
 constructionbox<-box(
     width=12, height=150, background = "red",
     h2("This app is still under construction."),
     h2("Contents shown are mostly placeholder which may not be real.")
 )
-
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader( 
@@ -61,9 +58,7 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
     
     ############################# preparation
-    useShinyjs(),
     shinyDashboardThemes(theme="poor_mans_flatly"),
-    #shinyDashboardThemes(theme="grey_dark"),
     
     tabItems(
         ######################### Visualisation tab        
@@ -71,11 +66,9 @@ body <- dashboardBody(
             "tab_vis",
             if (appdone==FALSE) {constructionbox},
             
-            ########### Intro
-            "Welcome! If your name is Amy or is planning to", 
-            "buy a flat in Singapore, then you are at the correct place.",
-            "In this section, you will see some interesting figures and trends ",
-            "on the resale flat prices in Singapore.",
+            ########### title
+            h1("Visualization for Singapore HDB Resale Flat Price", 
+               style = "margin-left: 20px;"),
             br(),
             
             ########### Plottings
@@ -117,15 +110,9 @@ body <- dashboardBody(
                 tabPanel("Price Heat Map",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_hm_xvar", label = "X-attribute",
-                                #choices = inputC$attChoices,
-                                choices = inputC$attChoices[c("Region","Town")],
-                                selected = "region"
-                            ),
-                            selectInput("i_vis_hm_yvar", label = "Y-attribute",
-                                #choices = inputC$attChoices,
-                                choices = inputC$attChoices[c("Flat Type","Flat Model")],
-                                selected = "flat_type"
+                            selectInput("i_vis_hm_xyvar", label = "Axis Attributes",
+                                choices = inputC$hmChoices,
+                                selected = "region & flat_type"
                             ),
                             selectInput("i_vis_hm_year", label = "Year",
                                 choices = as.list(c("All", sort(inputC$year))),
@@ -143,11 +130,11 @@ body <- dashboardBody(
                     )# close fluidR bracket     
                 ), #close hm bracket
                 
-                tabPanel("Floor Area Scatter Plot",
+                tabPanel("Price Scatter Plot",
                     fluidRow(
                         column(3,
                             selectInput("i_vis_splot_z", label = "Color Attribute",
-                                choices = inputC$attChoices,
+                                choices = inputC$spChoices,
                                 selected = "region"
                             ),
                             selectInput("i_vis_splot_year", label = "Year",
@@ -166,12 +153,9 @@ body <- dashboardBody(
                 )# close scatter plot bracket
                 
             ), #close plotting tabbox bracket
-            br(),
             
-            ########### direct to predict
-            actionButton("i_vis_direct", label = "Click here",
-                         style= "background-color: #FFFFFF; color: #0645AD"),
-            "to find out the estimated price for your dream home!"
+            tags$p(".", style = "color: #FFFFFF;")
+
         ), #close vis tabItem bracket
         
         ######################### Prediction tab        
@@ -179,28 +163,28 @@ body <- dashboardBody(
             "tab_pred",
             if (appdone==FALSE) {constructionbox},
             
-            ################ Intro
-            "Let's do some prediction!", br(),
-            "Simply select the flat feature and we will do the remaining job.",
+            ################ title
+            h1("Prediction of Singapore HDB Resale Flat Price",
+               style = "margin-left: 20px;"),
             br(),
             
             ################ feature box
-            box(title = "Flat Details", width = 12, height= 550,
+            box(title = tags$p("Flat Details", 
+                               style="font-size: 22px; margin-bottom: 0px;"),
+                width = 12, height= 590,
                 solidHeader = TRUE, collapsible = FALSE,
                 status = "warning",
                 
                 ############### 1st row for town
                 fluidRow(
-                    
+                    column(12, tags$h4(tags$u("Location:"))),
                 
-                    column(5,
+                    column(4,
                         selectInput(
                             width = "100%",
                             "i_pred_town", label = "Town",
                             choices = as.list(sort(inputC$town))
-                            #selected = "Bedok"
                         ), #close town input bracket
-
                     ),
                     
                     column(2,
@@ -216,32 +200,31 @@ body <- dashboardBody(
                 ############### 2nd row for flat features  
                 
                 fluidRow(
-                    column(12, h3("Flat Features:")),
+                    column(12, tags$h4(tags$u("Flat Features:"))),
                     
                     column(4, 
                            selectInput(
                                width = "100%",
                                "i_pred_flatM", label = "Flat Model",
-                               #choices = as.list(sort(inputC$new_flat_model))
                                choices = as.list(sort(inputC$flat_model))
                            ), #close flatM input bracket
                            
+                           br(),
                            selectInput(
                                width = "100%",
                                "i_pred_flatT", label = "Flat Type",
                                choices = as.list(sort(inputC$flat_type))
-                               #selected = "1 Room"
                            ) #close flatT input bracket
                     ), #close 1st column bracket
                     
                     column(4, 
-                           numericInput(
+                           sliderInput(
                                width = "100%",
                                "i_pred_maxF", 
-                               label = "Max Floor Level",
+                               label = "Highest Floor Level",
                                min = inputC$max_floor_lvl[1],
                                max = inputC$max_floor_lvl[2], 
-                               value = floor(mean(inputC$max_floor_lvl))
+                               value = inputC$max_floor_lvl[2]
                            ), #close maxF bracket
                            
                            sliderInput(
@@ -257,10 +240,10 @@ body <- dashboardBody(
                     column (4,
                         selectInput(
                             width = "100%",
-                            "i_pred_SRange", label = "Storey Range",
+                            "i_pred_SRange", label = "Preferred Range for Storey Level",
                             choices = as.list(sort(inputC$storey_range))
-                            #selected = "01 to 03"
                         ), #close SRange input bracket
+                        br(),
                         sliderInput(
                             width = "100%",
                             "i_pred_RLease", label = "Remaining Lease (year)",
@@ -275,28 +258,33 @@ body <- dashboardBody(
                 
                 fluidRow(
                     
-                    column(12, h3("Others:")),
+                    column(12, tags$h4(tags$u("Others:"))),
                     
                     column(2,
-                        checkboxInput("i_pred_com", label = "Commercial", value = TRUE),
+                        checkboxInput("i_pred_com", label = "Commercial", value = FALSE)
                     ),
                     
                     column(2,
-                        checkboxInput("i_pred_mh", label = "Market Hawker", value = TRUE),
+                        checkboxInput("i_pred_mh", label = "Market Hawker", value = FALSE)
                     ),
-                    
-                    column(2,
-                        checkboxInput("i_pred_misc", label = "Miscellaneous", value = TRUE),
+                    column(8,
+                        column(4,
+                            checkboxInput("i_pred_carp", label = "Multi Storey Car Park", value = FALSE)
+                        ),
+
+                        column(4,
+                            checkboxInput("i_pred_ppav", label = "Precinct Pavillion", value = FALSE)    
+                        ),
+                        
+                        column(4,
+                            checkboxInput("i_pred_misc", label = "Miscellaneous *", value = FALSE)
+                        )
                     ),
-                    
-                    column(3,
-                        checkboxInput("i_pred_carp", label = "Multi Storey Car Park", value = TRUE),
-                    ),
-                    
-                    column(2,
-                        checkboxInput("i_pred_ppav", label = "Precinct Pavillion", value = TRUE),
-                    )
                 ),
+                fluidRow(column(12, 
+                    "* here")
+                ),
+                br(),
                 
                 ############### last row for button
                 fluidRow(
@@ -311,33 +299,36 @@ body <- dashboardBody(
                             label = "Predict!",
                             width = "100px"
                         ) #close predict button input bracket
-                        
-                       
-                    ) #close predict button column bracket
+                    ) #close button column bracket
                     
-                )# close flat feature row bracket
+                )# close button row bracket
             ),#close flat detail box bracket
             br(),
             
             #################### results box
-            box(title="Results", width = 12, height = 300,
+            box(title=tags$p("Results", 
+                             style="font-size: 22px; margin-bottom: 0px;"),
+                width = 12, height = 380,
                 solidHeader = TRUE, collapsible = FALSE,
-                status = "success",
-                #dataTableOutput("o_pred_res_table"),
+                status = "warning",
                 
-                h3(textOutput("o_pred_param_title")),
+                tags$h4(textOutput("o_pred_param_title")),
+                tags$u(textOutput("o_pred_param_loc")),
                 textOutput("o_pred_param_town"),
-                textOutput("o_pred_param_ff0"),
+                br(),
+                tags$u(textOutput("o_pred_param_ff0")),
                 textOutput("o_pred_param_ff1"),
                 textOutput("o_pred_param_ff2"),
-                textOutput("o_pred_param_oth0"),
+                br(),
+                tags$u(textOutput("o_pred_param_oth0")),
                 textOutput("o_pred_param_oth1"),
-                
-                h3(textOutput("o_pred_res_price"))
+                br(),
+                tags$h4(textOutput("o_pred_res_price0")),
+                tags$h3(textOutput("o_pred_res_price1"),
+                        style="margin-top: 0px; margin-bottom: 0px;")
             ), #close results box bracket
-            #to fix background color
-            br(),
-            "need text to fix background?"
+            
+            tags$p(".", style = "color: #FFFFFF;")
             
         ), #close pred tabItem bracket
         
@@ -348,7 +339,7 @@ body <- dashboardBody(
             
             box(title = "Dataset", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
-                status = "info",
+                status = "warning",
                 "The prediction model is trained using the", 
                 tags$a(href="https://data.gov.sg/dataset/resale-flat-prices",
                        "open dataset", target = "_blank"), 
@@ -358,23 +349,45 @@ body <- dashboardBody(
             
             box(title = "Data Attributes", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
-                status = "info",
+                status = "warning",
                 "Hello."
             ),# close data attr box bracket
             
+            box(title = "Declaration", width = 12,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "This project is conducted to fulfill the academic requirement",
+                "of the course Principal of Data Science (WQD7001). The data is",
+                "used under the license https://data.gov.sg/open-data-licence",
+                "(last accessed on (date))."
+            ), #close declaration box
+            
             box(title = "Acknowledgement", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
-                status = "info",
-                "Thank you all"
+                status = "warning",
+                "We would like to express our gratitude to our lecturer, ",
+                "Dr Rohana binti Mahmud for allowing us to engage in this ",
+                "project. We would also like to show our appreciation for ",
+                "each and every member of the group as we manage to ",
+                "push through the difficulties and to complete this project. ",
+                "Lastly, we hope that the project will contribute to the users ",
+                "through the visualization and prediction of ",
+                "the current market price of the HDB flat in Singapore."
             ),# close ack box bracket
             
             box(title = "About Us", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
-                status = "info",
-                "We are 5 smart PG students", br(),
+                status = "warning",
+                "Master of Data Science", br(),
+                "Amy Lang S2127213", br(),
+                "Ching Peng Liaw S2038321", br(),
+                "Li Tian Yeoh S2120306", br(),
+                "Wei Wen Wong S2121928", br(),
+                "Yong Kok Khuen 17147279", br(),
                 "Github repo here?"
-            )# close ack box bracket
+            ),# close ack box bracket
             
+            tags$p(".", style = "color: #FFFFFF;")
         ), #close doc tabItem bracket
         
         ######################### Todo tab
@@ -385,45 +398,25 @@ body <- dashboardBody(
             fluidRow(
                 
                 column(6,
-                    box(title="Icon choices", width=12,
-                        collapsible = TRUE,
-                        img(src = "icons.png", height = '250px', width = '400px',
-                                 alt = "icon choices"), br(),
-                        tags$a(href="https://getbootstrap.com/docs/3.4/components/#glyphicons",
-                               "Link to full icon list")
-                             
-                    )#close icon box bracket
-                
-                ),
-                
-                column(6,
                     box(title = "Others", width=12,
                         
                         "General",
                         tags$ul(
                             tags$li("remove redundant data in inputC"),
-                            tags$li("remove redundant data in global.R"),
                             tags$li("Colorrrrrrrrrr"),
                             tags$li("Englishhhhhhhh")
                         ),
                         
                         "Visualisation tab:",
                         tags$ul(
-                            tags$li("Visualisation deco"),
-                            tags$li("keep region in vis?")
+                            tags$li("nothing?")
                         ),
                         
                         "Prediction tab:",
                         tags$ul(
-                            tags$li("reset button update inputs"),
-                            tags$li("map modal tidy up"),
-                            tags$li("remove est. reg. in map modal"),
-                            tags$li("num var in pred, allowed range?"),
-                            tags$li("explain pred feature?"),
-                            tags$li("max floor level range?"),
-                            tags$li("rem lease in year or month?"),
-                            tags$li("rem lease in res para"),
-                            tags$li("result box param display")
+                            tags$li("binary input spacing"),
+                            tags$li("yes/no or Yes/No?"),
+                            tags$li("display param space formatting"),
                         )
                         
                     )
@@ -439,11 +432,6 @@ body <- dashboardBody(
                 
     ) #close tabItems bracket
 ) #close DBbody bracket
-
-
-
-
-
 
 
 # Shiny UI ----------------------------------------------------------------

@@ -7,21 +7,17 @@
 
 # Library -----------------------------------------------------------------
 library(shiny)
-library(shinyjs)
 library(shinyBS)
-library(plotly)
+library(stringr)
 library(jsonlite)
 library(leaflet)
 library(randomForest)
 
 # Inititation -------------------------------------------------------------
 #moved to global.R
-# mapModal<-
 
 # Shiny Server ------------------------------------------------------------
 shinyServer(function(input, output, session) {
-    
-    ################ shiny js
     
     ################ output in tab_vis
     
@@ -59,7 +55,6 @@ shinyServer(function(input, output, session) {
         
         if (input$i_vis_trend_FModel =="All"){
             selFModel<- unlist(inputC$flat_model)
-            #selFModel<- unlist(inputC$new_flat_model)
         } else {
             selFModel<- input$i_vis_trend_FModel
         }
@@ -68,8 +63,7 @@ shinyServer(function(input, output, session) {
             filter(region %in% selreg, town %in% seltown,
                 flat_type %in% selFType, flat_model %in% selFModel) %>%
             mutate(dateym = as.Date(paste(year, month, "01", sep="-"), format= "%Y-%m-%d")) 
-        
-    
+
         trendplotSubT<- paste(
             "Region: ", input$i_vis_trend_reg, " ;   ",
             "Town: ", input$i_vis_trend_town, " ;   ",
@@ -78,17 +72,13 @@ shinyServer(function(input, output, session) {
             "Number of Data Found: ", nrow(trenddf), ".",
             sep = "")
         
-        
         output$o_vis_trend_plot<-renderPlot({
             
             trendsum<- trenddf %>% group_by(dateym) %>% 
                 summarise(mean_resale_price= mean(RP_in_k)) 
             
-            
-            
             trendplot<- trendsum %>%
                 ggplot(aes(x=dateym, y = mean_resale_price)) + theme_bw() +
-                #theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
                 geom_line() + geom_point() +
                 ggtitle("HDB Resale Price in Singapore from 2015 to 2021",
                         subtitle = trendplotSubT) +
@@ -101,13 +91,9 @@ shinyServer(function(input, output, session) {
             }
             
             trendplot
-            
-            
-            
+   
         })
     }) ####### close trend plotting
-    
-    
     
     observeEvent(input$i_vis_hm_subbut, { 
         if (input$i_vis_hm_year == "All"){
@@ -122,16 +108,18 @@ shinyServer(function(input, output, session) {
                            "Number of Data Found: ", nrow(hmdf), ".",
                            sep = "")
         
+        xyvar<- unlist(str_split(input$i_vis_hm_xyvar, " & "))
+
         hmsum<- hmdf %>%
-            group_by_at(vars(input$i_vis_hm_xvar,
-                             input$i_vis_hm_yvar)) %>% 
+            group_by_at(vars(xyvar[1],
+                             xyvar[2])) %>% 
             summarise(MRP_in_k = mean(RP_in_k), .groups = "drop")
         
-        xaxlab<-names(inputC$attChoices)[which(inputC$attChoices==input$i_vis_hm_xvar)]
-        yaxlab<-names(inputC$attChoices)[which(inputC$attChoices==input$i_vis_hm_yvar)]
+        xaxlab<-names(inputC$attChoices)[which(inputC$attChoices==xyvar[1])]
+        yaxlab<-names(inputC$attChoices)[which(inputC$attChoices==xyvar[2])]
         
         hmplot<- hmsum %>%
-            ggplot(aes_string(x = input$i_vis_hm_xvar,y= input$i_vis_hm_yvar,
+            ggplot(aes_string(x = xyvar[1], y= xyvar[2],
                               fill="MRP_in_k"))+
             geom_tile() + theme_bw() +
             theme(panel.grid.major = element_blank(), panel.grid.minor = element_blank()) +
@@ -147,8 +135,7 @@ shinyServer(function(input, output, session) {
         })
     }) ##### close heatmap plotting
     
-    
-    
+
     observeEvent(input$i_vis_splot_subbut, {
         
         if (input$i_vis_splot_year == "All"){
@@ -168,7 +155,7 @@ shinyServer(function(input, output, session) {
         SPplot<- splotdf %>%
             ggplot(aes_string(x = "RP_in_k", y = "floor_area_sqm", 
                               color = input$i_vis_splot_z)) + 
-            geom_point() + theme_bw() +
+            geom_point(alpha=0.1) + theme_bw() +
             scale_color_hue() +
             ggtitle("HDB Resale Price in Singapore by Floor Area (sqm)",
                     subtitle = SPplotsubT) +
@@ -176,9 +163,6 @@ shinyServer(function(input, output, session) {
             ylab("Floor Area (sqm)") +
             guides(color=guide_legend(title=legtitle))
             
-            
-        
-        
         output$o_vis_splot<-renderPlot({
             SPplot
         })
@@ -195,12 +179,9 @@ shinyServer(function(input, output, session) {
             title = "Map", id="o_pred_map_modal", 
             leafletOutput("o_pred_map"), 
             br(),
-            textOutput("o_pred_map_loc"),
-            "Estimated Region: ", textOutput("o_pred_map_reg", inline = TRUE),
-            br(),
-            "Estimated Town: ", textOutput("o_pred_map_town", inline = TRUE),
-            br(),
-            textOutput("o_pred_map_add"),
+            "Click on the map to get the nearest town.", br(),
+            "Nearest Town: ", textOutput("o_pred_map_town", inline = TRUE),
+            
             easyClose=TRUE, 
             footer = modalButton("Confirm")
         )
@@ -211,9 +192,20 @@ shinyServer(function(input, output, session) {
         }) #close render Leaflet
     })
     
-    #output$o_pred_map<- renderLeaflet({
-    #    SgMap
-    #}) #close render Leaflet
+    observeEvent(input$i_pred_maxF, {
+        maxindex<- ceiling(input$i_pred_maxF/3)
+        newchoices<- as.list(sort(inputC$storey_range)[1:maxindex])
+        
+        tosel<- ifelse(input$i_pred_SRange %in% newchoices,
+                       input$i_pred_SRange,
+                       "01 TO 03")
+        
+        updateSelectInput(session, "i_pred_SRange",
+                          choices = newchoices,
+                          selected = tosel
+        )
+    }
+    )
     
     observeEvent(input$o_pred_map_click, {
         
@@ -221,34 +213,7 @@ shinyServer(function(input, output, session) {
         fLng<-as.numeric(input$o_pred_map_click[2])
         
         distvec<- summarise(TownData,dist = geodist(fLat,fLng,Lat,Lng))
-        
         towntext<- TownData$Town[which.min(unlist(distvec))]
-        regtext<- "Unknown"
-        for (reg in inputC$region){
-            if (towntext %in% unlist(inputC$RegTown[reg])) {
-                regtext<- reg
-                break
-            }
-        }
-        
-        
-        #actual address
-        fLat<-toString(fLat)
-        fLng<-toString(fLng)
-        
-        output$o_pred_map_add<- renderText({
-                
-            osmurl<- paste(osmapi[1],fLat,osmapi[2],fLng, sep="")
-            suppressWarnings(
-                osmjson<- fromJSON(readLines(osmurl))
-            )
-            osmjson$display_name
-        })
-        
-        output$o_pred_map_loc<- renderText(paste(fLat,fLng, sep = " , "))
-        
-        output$o_pred_map_reg<- renderText({regtext})
-        #updateSelectInput(session, "i_pred_region", selected = regtext)
         
         output$o_pred_map_town<- renderText({towntext})
         updateSelectInput(session, "i_pred_town", selected = towntext)
@@ -281,12 +246,14 @@ shinyServer(function(input, output, session) {
         df_input$storey_range <- factor(df_input$storey_range, levels = lvl_storey_range)
         df_input$flat_model <- factor(df_input$flat_model, levels = lvl_flat_model)
         
-        predprice<- predict(predmodel, newdata=df_input)
-        
-        #output$o_pred_res_table<- renderDataTable(df_input)
+        predprice<- round(predict(predmodel, newdata=df_input)/1000)
         
         output$o_pred_param_title<-renderText({
             "Flat Details:"
+        })
+        
+        output$o_pred_param_loc<-renderText({
+            "Location:"
         })
         
         output$o_pred_param_town<-renderText({
@@ -299,15 +266,15 @@ shinyServer(function(input, output, session) {
         
         output$o_pred_param_ff1<-renderText({
             paste( "Flat Model: ", flat_model, ",   ",
-                   "Max Floor Level: ", max_floor_lvl, ",   ",
-                   "Storey Range: ", storey_range, ",",
+                   "Highest Floor Level: ", max_floor_lvl, ",   ",
+                   "Preferred Range for Storey Level: ", storey_range, ",",
                    sep = "")
         })
         
         output$o_pred_param_ff2<-renderText({
             paste( "Flat Type: ", flat_type, ",   ",
                    "Floor Area (sqm): ", floor_area_sqm, ",   ",
-                   "Remaining Lease (year): ", remaining_lease, ".", 
+                   "Remaining Lease (year): ", remaining_lease/12, ".", 
                    sep = "")
         })
         
@@ -316,19 +283,19 @@ shinyServer(function(input, output, session) {
         })
         
         output$o_pred_param_oth1<-renderText({
-            paste( "Commercial: ", commercial, ",   ",
-                   "Market Hawker: ", market_hawker, ",   ",
-                   "Miscellaneous: ", miscellaneous, ",   ",
-                   "Multi Storey Car Park: ", multistorey_carpark, ",   ",
-                   "Precinct Pavillion: ", precinct_pavilion, ".",
+            paste( "Commercial: ", convertYN(commercial), ",   ",
+                   "Market Hawker: ", convertYN(market_hawker), ",   ",
+                   "Miscellaneous: ", convertYN(miscellaneous), ",   ",
+                   "Multi Storey Car Park: ", convertYN(multistorey_carpark), ",   ",
+                   "Precinct Pavillion: ", convertYN(precinct_pavilion), ".",
                    sep = "")
         })
         
-        
-        output$o_pred_res_price<- renderText({
-            paste('Predicted Current Price: ', 
-                  toString(round(predprice, digits=2)),
-                  " S$",
+        output$o_pred_res_price0<- renderText({
+            'Predicted Current Price: '
+        })
+        output$o_pred_res_price1<- renderText({
+            paste("S$ ", predprice, ",000",
                   sep="")
         })
         
@@ -338,20 +305,24 @@ shinyServer(function(input, output, session) {
         updateSelectInput(session, "i_pred_town", selected=head(sort(inputC$town),1))
         
         updateSelectInput(session, "i_pred_flatM", selected=head(sort(inputC$flat_model),1))
-        updateNumericInput(session, "i_pred_maxF", value = floor(mean(inputC$max_floor_lvl)))
-        updateSelectInput(session, "i_pred_SRange", selected=head(sort(inputC$storey_range),1))
+        updateNumericInput(session, "i_pred_maxF", value = inputC$max_floor_lvl[2])
+        updateSelectInput(session, "i_pred_SRange", 
+                          choices = as.list(sort(inputC$storey_range)),
+                          selected=head(sort(inputC$storey_range),1))
         
         updateSelectInput(session, "i_pred_flatT", selected=head(sort(inputC$flat_type),1))
         updateSliderInput(session, "i_pred_floorA", value = floor(mean(inputC$floor_area_sqm)))
         updateSliderInput(session, "i_pred_RLease", value = floor(mean(inputC$remaining_lease)))
         
-        updateCheckboxInput(session, "i_pred_com", value = TRUE)
-        updateCheckboxInput(session, "i_pred_mh", value = TRUE)
-        updateCheckboxInput(session, "i_pred_misc", value = TRUE)
-        updateCheckboxInput(session, "i_pred_carp", value = TRUE)
-        updateCheckboxInput(session, "i_pred_ppav", value = TRUE)
+        updateCheckboxInput(session, "i_pred_com", value = FALSE)
+        updateCheckboxInput(session, "i_pred_mh", value = FALSE)
+        updateCheckboxInput(session, "i_pred_misc", value = FALSE)
+        updateCheckboxInput(session, "i_pred_carp", value = FALSE)
+        updateCheckboxInput(session, "i_pred_ppav", value = FALSE)
         
         output$o_pred_param_title<- renderText({""
+        }) 
+        output$o_pred_param_loc<- renderText({""
         }) 
         output$o_pred_param_town<- renderText({""
         }) 
@@ -365,12 +336,10 @@ shinyServer(function(input, output, session) {
         }) 
         output$o_pred_param_oth1<- renderText({""
         }) 
-        
-        
-        
-        
-        output$o_pred_res_price<- renderText({""
+        output$o_pred_res_price0<- renderText({""
         }) 
+        output$o_pred_res_price1<- renderText({""
+        })
     }) #close observe resetbut bracket
     
     ################ output in tab_doc

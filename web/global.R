@@ -20,14 +20,8 @@ load(file = "www/TownData.RData")
 # For server use ----------------------------------------------------------
 
 # load cleaned dataset from github
-#ghurl<- 'https://media.githubusercontent.com/media/yongkokkhuen/pds-group-project/main/data/data_clean.csv'
-#cleancsv<- data.frame(read_csv(ghurl))
 cleancsv<- data.frame(read_csv("www/data_clean.csv"))
 cleancsv<- cleancsv %>% mutate(RP_in_k= resale_price/1000)
-
-# open street map api
-osmapi<- c("https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=",
-           "&lon=")
 
 # load prediction model
 predmodel <- readRDS("www/rf_model.rds")
@@ -37,11 +31,10 @@ lvl_storey_range <- readRDS("www/lvl_storey_range.rds")
 lvl_town <- readRDS("www/lvl_town.rds")
 
 #leaflet map
-SgMap<- leaflet(data=TownData, options = leafletOptions(zoomSnap = 0.5, zoomDelta=0.5)) %>% 
+SgMap<- leaflet(options = leafletOptions(zoomSnap = 0.5, zoomDelta=0.5)) %>% 
   addProviderTiles(providers$OneMapSG.Original, 
                    options = providerTileOptions(
                      minZoom = 10.5, maxZoom = 15)) %>%
-  addMarkers(~Lng, ~Lat, label= ~Town) %>%
   setView(lat = 1.318, lng=103.84, zoom=10.5)
 
 
@@ -63,4 +56,10 @@ geodist<- function(lat1, lng1, lat2, lng2){
   dist<- asin(temp2)
   
   return(dist)
+}
+
+
+# convert 1/0 to yes no
+convertYN<- function(num){
+  return(ifelse(num==1,"yes","no"))
 }
