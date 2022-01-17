@@ -171,7 +171,7 @@ body <- dashboardBody(
             ################ feature box
             box(title = tags$p("Flat Details", 
                                style="font-size: 22px; margin-bottom: 0px;"),
-                width = 12, height= 590,
+                width = 12, height= 610,
                 solidHeader = TRUE, collapsible = FALSE,
                 status = "warning",
                 
@@ -282,7 +282,12 @@ body <- dashboardBody(
                     ),
                 ),
                 fluidRow(column(12, 
-                    "* here")
+                    "* Other amenities such as ",
+                    "admin office, childcare centre, education centre, ",
+                    "Residents’ Committees centre, etc.",
+                    br(),
+                    "Note: refer to the documentation tab for more information",
+                    "on each attributes")
                 ),
                 br(),
                 
@@ -340,17 +345,177 @@ body <- dashboardBody(
             box(title = "Dataset", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
-                "The prediction model is trained using the", 
-                tags$a(href="https://data.gov.sg/dataset/resale-flat-prices",
-                       "open dataset", target = "_blank"), 
-                "provided by Singapore Housing and Development Board."
+                "The prediction model is trained using the open dataset",
+                "provided by Singapore Housing and Development Board:",
+                br(),
+                br(),
+                
+                tags$ol(
+                    tags$li("Resale Flat Price", 
+                        tags$ul(
+                            tags$li("Source: ",
+                                tags$a(href = "https://data.gov.sg/dataset/resale-flat-prices",
+                                       "https://data.gov.sg/dataset/resale-flat-prices",
+                                       target = "_blank"
+                                )
+                            ),
+                            tags$li("Resale flat transacted prices based on",
+                            "registration date from 2015-2021 are selected",
+                            "in this project.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("HDB Property Information",
+                        tags$ul(
+                            tags$li("Source: ",
+                                tags$a(href = "https://data.gov.sg/dataset/hdb-property-information",
+                                       "https://data.gov.sg/dataset/hdb-property-information",
+                                       target = "_blank"
+                                )
+                            ),
+                            tags$li("The dataset contains the location of",
+                            "existing HDB blocks, highest floor level, ",
+                            "year of completion, type of building and ",
+                            "number of HDB flats (breakdown by flat type) ",
+                            "per block etc.")
+                        )
+                    )
+                    
+                ),
+                
+                "The data were last accessed on (date)"
                 
             ),# close dataset box bracket
             
             box(title = "Data Attributes", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
-                "Hello."
+                tags$ol(
+                    
+                    tags$li("Region",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Town",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                        "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Flat Model",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html",
+                                        "https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html",
+                                       target = "_blank"
+                                ),
+                                "and",
+                                tags$a(href = "https://www.teoalida.com/singapore/hdbfloorplans/",
+                                       "https://www.teoalida.com/singapore/hdbfloorplans/",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Flat Type",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats",
+                                       "https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Highest Floor Level",
+                        tags$ul(
+                            tags$li("Highest floor level of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Preferred Range for Storey Level",
+                        tags$ul(
+                            tags$li("Preferred range for storey level of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Floor Area (m", tags$sup("2"), ")",
+                        tags$ul(
+                            tags$li("Floor area of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Remaining Lease (Year)",
+                        tags$ul(
+                            tags$li("Remaining lease of the resale flat."),
+                            tags$li("Most of the HDB flats come with a 99-year lease.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Commercial",
+                        tags$ul(
+                            tags$li("Close to commercial property.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Market Hawker",
+                        tags$ul(
+                            tags$li("Close to market and hawker.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Multi Storey Car Park",
+                        tags$ul(
+                            tags$li("Close to multi-storey carpark.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Precinct Pavilion",
+                        tags$ul(
+                            tags$li("Close to precinct pavillion.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Miscellaneous",
+                        tags$ul(
+                            tags$li("Close to other amenities such as ",
+                            "admin office, childcare centre, education centre, ",
+                            "Residents’ Committees centre, etc.")
+                        )
+                    )
+                
+                )
             ),# close data attr box bracket
             
             box(title = "Declaration", width = 12,
@@ -358,8 +523,12 @@ body <- dashboardBody(
                 status = "warning",
                 "This project is conducted to fulfill the academic requirement",
                 "of the course Principal of Data Science (WQD7001). The data is",
-                "used under the license https://data.gov.sg/open-data-licence",
-                "(last accessed on (date))."
+                "used under the license",
+                tags$a(href = "https://data.gov.sg/open-data-licence",
+                       "https://data.gov.sg/open-data-licence",
+                       target = "_blank"
+                ),
+                "."
             ), #close declaration box
             
             box(title = "Acknowledgement", width = 12,
@@ -402,7 +571,6 @@ body <- dashboardBody(
                         
                         "General",
                         tags$ul(
-                            tags$li("remove redundant data in inputC"),
                             tags$li("Colorrrrrrrrrr"),
                             tags$li("Englishhhhhhhh")
                         ),
@@ -414,9 +582,19 @@ body <- dashboardBody(
                         
                         "Prediction tab:",
                         tags$ul(
+                            tags$li("note and *?"),
                             tags$li("binary input spacing"),
                             tags$li("yes/no or Yes/No?"),
                             tags$li("display param space formatting"),
+                        ),
+                        
+                        "Documentation tab:",
+                        tags$ul(
+                            tags$li("data attr first then only data set?"),
+                            tags$li("last access date"),
+                            tags$li("declaration split and remove?"),
+                            tags$li("about us formatting?"),
+                            tags$li("naming last or first name")
                         )
                         
                     )
