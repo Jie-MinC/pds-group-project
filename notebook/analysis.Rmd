@@ -22,7 +22,6 @@ References:
 library(tidyr)
 library(tidyverse)
 library(summarytools)
-library(car)
 library(dlookr)
 library(ggplot2)
 library(plyr)
@@ -240,7 +239,7 @@ p + coord_flip() + scale_y_continuous(limit = c(0, 8000))
 data$region <- ifelse (data$town %in% c("BUKIT MERAH","BUKIT TIMAH","GEYLANG","TOA PAYOH",
                                         "BISHAN","KALLANG/WHAMPOA","MARINE PARADE", "CENTRAL AREA", "QUEENSTOWN"), "Central",
                        ifelse (data$town %in% c("TAMPINES","BEDOK","PASIR RIS"), "East",
-                               ifelse (data$town %in% c("LIM CHU KANG","SEMBAWANG","WOODLANDS","YISHUN"), "North",
+                               ifelse (data$town %in% c("SEMBAWANG","WOODLANDS","YISHUN"), "North",
                                        ifelse (data$town %in% c("ANG MO KIO","HOUGANG","PUNGGOL","SENGKANG",
                                                                 "SERANGOON"), "North-East",
                                                ifelse (data$town %in% c("BUKIT BATOK","BUKIT PANJANG",
