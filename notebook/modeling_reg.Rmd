@@ -1,0 +1,233 @@
+---
+title: "Prediction On Resale Flat Prices"
+output: html_notebook
+---
+
+# Modeling
+
+```{r}
+library(dplyr)
+library(ggplot2)
+```
+
+```{r}
+df <- read.csv("../data/data_clean.csv", stringsAsFactors = TRUE)
+df$year <- factor(df$year)
+df$month <- factor(df$month)
+df$block <- factor(df$block)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+colnames(df)
+```
+
+## Train-Test Split
+
+```{r}
+sort(unique(df$year))
+```
+
+```{r}
+train_set <- df %>% filter(year != 2021)
+test_set <- df %>% filter(year == 2021)
+```
+
+```{r}
+head(train_set)
+```
+
+```{r}
+head(test_set)
+```
+
+## Helper Functions
+
+```{r}
+get_metrics <- function(y_actual, y_predict) {
+  mae <- mean(abs(y_actual - y_predict))
+  mse <- mean((y_actual - y_predict)^2)
+  rmse <- sqrt(mse)
+
+  sse <- sum((y_actual - y_predict)^2)
+  sst <- sum((y_actual - mean(y_actual))^2)
+  rsq <- 1 - (sse / sst)
+
+  metrics <- data.frame(MAE = mae, MSE = mse, RMSE = rmse, "R-squared" = rsq)
+  return(metrics)
+}
+```
+
+```{r}
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+```
+
+## Linear Regression
+
+```{r}
+set.seed(101)
+
+reg_train_set <- train_set %>% select(all_of(selected_columns))
+reg_test_set <- test_set %>% select(all_of(selected_columns))
+
+reg_model <- lm(resale_price ~ ., data = reg_train_set)
+```
+
+```{r}
+summary(reg_model)
+```
+
+```{r}
+reg_pred <- predict(reg_model, newdata = reg_test_set)
+```
+
+```{r}
+reg_metrics <- get_metrics(reg_test_set$resale_price, reg_pred)
+reg_metrics
+```
+
+## Polynomial Regression
+
+```{r}
+head(reg_test_set)
+```
+
+
+```{r}
+set.seed(101)
+
+p_reg_train_set <- train_set %>% select(all_of(selected_columns))
+p_reg_test_set <- test_set %>% select(all_of(selected_columns))
+
+
+degree_list <- 2:10
+rmse_train_list <- numeric()
+rmse_test_list <- numeric()
+
+for (i in degree_list) {
+  # raw = TRUE means not orthogonal polynomials
+  model <- lm(resale_price ~ polym(floor_area_sqm, remaining_lease, max_floor_lvl, degree = i, raw = TRUE) + town + flat_type + storey_range + flat_model + commercial + market_hawker + miscellaneous + multistorey_carpark + precinct_pavilion, data = p_reg_train_set)
+
+  pred_train <- predict(model, newdata = p_reg_train_set)
+  rmse_train <- sqrt(mean((p_reg_train_set$resale_price - pred_train)^2))
+  rmse_train_list <- c(rmse_train_list, rmse_train)
+
+  pred_test <- predict(model, newdata = p_reg_test_set)
+  rmse_test <- sqrt(mean((p_reg_test_set$resale_price - pred_test)^2))
+  rmse_test_list <- c(rmse_test_list, rmse_test)
+}
+
+
+print(c("RMSE (Train):", rmse_train_list))
+
+print(c("RMSE (Test):", rmse_test_list))
+
+rmse_compare <- data.frame(
+  degree = degree_list,
+  train = rmse_train_list,
+  test = rmse_test_list
+)
+
+ggplot(aes(x = degree), data = rmse_compare) +
+  geom_line(aes(y = train, color = "Train")) +
+  geom_line(aes(y = test, color = "Test")) +
+  scale_color_manual(name = "RMSE", values = c("Train" = "blue", "Test" = "red")) +
+  ggtitle("RMSE vs Polynomial Degree") +
+  xlab("Polynomial Degree") +
+  ylab("RMSE")
+```
+
+
+
+```{r}
+# Choose degree = 5 to avoid overfitting
+poly_reg_model <- lm(resale_price ~ polym(floor_area_sqm, remaining_lease, max_floor_lvl, degree = 5, raw = TRUE) + town + flat_type + storey_range + flat_model + commercial + market_hawker + miscellaneous + multistorey_carpark + precinct_pavilion, data = p_reg_train_set)
+
+summary(poly_reg_model)
+```
+
+```{r}
+p_reg_pred <- predict(poly_reg_model, newdata = p_reg_test_set)
+```
+
+```{r}
+p_reg_metrics <- get_metrics(p_reg_test_set$resale_price, p_reg_pred)
+p_reg_metrics
+```
+
+## Time Series Regression
+
+```{r}
+library(lubridate)
+library(forecast)
+```
+
+```{r}
+data <- df
+
+data$date <- as.Date(with(data, paste(year, month, 1, sep = "-")), "%Y - %m - %d")
+
+ts.data <- data %>%
+  group_by(date) %>%
+  summarise(mean_resale_price = mean(resale_price))
+head(ts.data)
+
+ts.data %>%
+  ggplot(aes(x = date, y = mean_resale_price)) +
+  geom_point(color = "darkorchid4") +
+  labs(
+    title = "Monthly resale price",
+    y = "Resale Price",
+    x = "Date"
+  ) +
+  theme_bw(base_size = 15)
+```
+
+```{r}
+ts_train_set <- ts.data %>% filter(date < "2021-01-01")
+ts_test_set <- ts.data %>% filter(date >= "2021-01-01")
+
+ts.train_set <- ts(ts_train_set[, c("mean_resale_price")])
+ts.test_set <- ts(ts_test_set[, c("mean_resale_price")])
+```
+
+```{r}
+set.seed(101)
+ts.model <- auto.arima(ts.train_set)
+ts.model
+```
+```{r}
+ts_pred <- forecast(ts.model, h = 12)
+```
+
+```{r}
+ts_metrics <- get_metrics(ts.test_set, ts_pred$residuals)
+ts_metrics
+```
+
+# Model Selection
+
+Compile metrics from all models.
+
+```{r}
+model_names <- c("Linear", "Polynomial", "Time Series") # Add other model names here
+all_models <- rbind(reg_metrics, p_reg_metrics, ts_metrics) # Add other metrics here
+row.names(all_models) <- model_names
+all_models
+```
+
+Choose the model with highest R-squared value.
+
+```{r}
+all_models %>% filter(R.squared == max(R.squared))
+```

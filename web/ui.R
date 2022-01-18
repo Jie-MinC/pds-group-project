@@ -4,27 +4,23 @@
 # tabName = "tab_{tabname}"
 # id for inputs: "i_{tabname}_{id}"
 # id for outputs: "o_{tabname}_{id}"
-# change appdone<- TRUE in Initiation section to remove construction box
+# change appdone<- TRUE in global.R to remove construction box
 
 
 # Library -----------------------------------------------------------------
 library(shiny)
 library(shinydashboard)
 library(dashboardthemes)
-library(shinyjs)
 library(shinyBS)
-library(plotly)
 library(leaflet)
 
-
 # Initiation --------------------------------------------------------------
-# moved to global.R
+# most moved to global.R
 constructionbox<-box(
     width=12, height=150, background = "red",
     h2("This app is still under construction."),
     h2("Contents shown are mostly placeholder which may not be real.")
 )
-
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader( 
@@ -47,7 +43,7 @@ sidebar <- dashboardSidebar(
         ),
         
         menuItem("Documentation", tabName="tab_doc",
-                 icon = icon("list-alt", lib="glyphicon")
+                 icon = icon("file", lib="glyphicon")
         ),
         
         menuItem("Todo", tabName="tab_todo"
@@ -62,9 +58,7 @@ sidebar <- dashboardSidebar(
 body <- dashboardBody(
     
     ############################# preparation
-    useShinyjs(),
     shinyDashboardThemes(theme="poor_mans_flatly"),
-    #shinyDashboardThemes(theme="grey_dark"),
     
     tabItems(
         ######################### Visualisation tab        
@@ -72,79 +66,96 @@ body <- dashboardBody(
             "tab_vis",
             if (appdone==FALSE) {constructionbox},
             
-            ########### Intro
-            "Welcome! If your name is Amy or is planning to", 
-            "buy a flat in Singapore, then you are at the correct place.",
-            "In this section, you will see some interesting figures and trends ",
-            "on the resale flat prices in Singapore.",
+            ########### title
+            h1("Visualization for Singapore HDB Resale Flat Price", 
+               style = "margin-left: 20px;"),
             br(),
             
             ########### Plottings
             tabBox(
                 height = 450, width = 12,
-                selected = "Region",
+                selected = "Trend",
                 
-                tabPanel("Floor Area", 
+                tabPanel("Trend", 
+                    #style= "background-color: #808080;",
                     fluidRow(
-                        column(3,
-                            selectInput("i_vis_area_y", label = "Year",
-                                        choices = list("2018"= 2018,
-                                                       "2019"= 2019,
-                                                       "2020"= 2020)    
+                        column(3, 
+                            selectInput("i_vis_trend_reg", label = "Region",
+                                choices = as.list(c("All",sort(inputC$region)))     
                             ),
-                            "No plotting here yet."
+                            selectInput("i_vis_trend_town", label = "Town",
+                                choices = as.list(c("All",sort(inputC$town)))     
+                            ),
+                            selectInput("i_vis_trend_FType", label = "Flat Type",
+                                choices = as.list(c("All",sort(inputC$flat_type)))    
+                            ),
+                            selectInput("i_vis_trend_FModel", label = "Flat Model",
+                                #choices = as.list(c("All",sort(inputC$new_flat_model)))
+                                choices = as.list(c("All",sort(inputC$flat_model)))
+                            ),
+                               
+                            actionButton("i_vis_trend_subbut",
+                                width = "100%",
+                                label = "Plot!"
+                            )
                         ), #close control column
+                        
+                        
                         column(9,
-                               "hi"
-                               #plotlyOutput("o_vis_area")
+                               plotOutput("o_vis_trend_plot")
                         ) #close plot column
                     )# close fluidR bracket
-                ), #close floor area bracket
+                ), #close trend bracket
                 
-                tabPanel("Region",
+                tabPanel("Price Heat Map",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_region_y", label = "Year",
-                                choices = list("2018"= 2018,
-                                               "2019"= 2019,
-                                               "2020"= 2020)    
+                            selectInput("i_vis_hm_xyvar", label = "Axis Attributes",
+                                choices = inputC$hmChoices,
+                                selected = "region & flat_type"
                             ),
-                            br(),
-                            "Year input ignored", br(),
-                            "This is preloaded gg plot"
+                            selectInput("i_vis_hm_year", label = "Year",
+                                choices = as.list(c("All", sort(inputC$year))),
+                                selected = "All"
+                            ),
+                            
+                            actionButton("i_vis_hm_subbut",
+                                         width = "100%",
+                                         label = "Plot!"
+                            )
                         ), #close control column
                         column(9,
-                            plotOutput("o_vis_region")
+                            plotOutput("o_vis_hm")
                         ) #close plot column
                     )# close fluidR bracket     
-                ), #close region bracket
+                ), #close hm bracket
                 
-                tabPanel("New Flat Model",
+                tabPanel("Price Scatter Plot",
                     fluidRow(
                         column(3,
-                            selectInput("i_vis_nfm_y", label = "Year",
-                                choices = list("2018"= 2018,
-                                               "2019"= 2019,
-                                               "2020"= 2020
-                                               )    
-                                ),
-                            br(),
-                            "Year input ignored", br(),
-                            "Changed back to ggplot instead of plotly ",
-                            "to improve performance"
+                            selectInput("i_vis_splot_z", label = "Color Attribute",
+                                choices = inputC$spChoices,
+                                selected = "region"
+                            ),
+                            selectInput("i_vis_splot_year", label = "Year",
+                                choices = as.list(c("All", sort(inputC$year))),
+                                selected = "All"
+                            ),
+                            actionButton("i_vis_splot_subbut",
+                                         width = "100%",
+                                         label = "Plot!"
+                            )
                         ), #close control column
                         column(9,
-                            plotOutput("o_vis_nfm")
+                            plotOutput("o_vis_splot")
                         ) #close plot column
                     )# close fluidR bracket          
-                )# close nfm bracket
+                )# close scatter plot bracket
                 
             ), #close plotting tabbox bracket
-            br(),
             
-            ########### direct to predict
-            actionButton("i_vis_direct", label = "Click here"),
-            "to find out the estimated price for your dream home!"
+            tags$p(".", style = "color: #FFFFFF;")
+
         ), #close vis tabItem bracket
         
         ######################### Prediction tab        
@@ -152,92 +163,69 @@ body <- dashboardBody(
             "tab_pred",
             if (appdone==FALSE) {constructionbox},
             
-            ################ Intro
-            "Let's do some prediction!", br(),
-            "Simply select the flat feature and we will do the remaining job.",
+            ################ title
+            h1("Prediction of Singapore HDB Resale Flat Price",
+               style = "margin-left: 20px;"),
             br(),
             
             ################ feature box
-            box(title = "Flat Details", width = 12, height= 550,
-                collapsible = TRUE,
+            box(title = tags$p("Flat Details", 
+                               style="font-size: 22px; margin-bottom: 0px;"),
+                width = 12, height= 610,
+                solidHeader = TRUE, collapsible = FALSE,
+                status = "warning",
                 
-                ############### 1st row for location
+                ############### 1st row for town
                 fluidRow(
-                    
-                    column(12, h3("Location:")),
-                    
-                    column(5, 
-                        selectInput(
-                            width = "100%",
-                            "i_pred_region", label = "Region",
-                            choices = as.list(sort(inputC$region))
-                            #selected = "North"
-                        ), #close region input bracket
-                        
-                        selectInput( 
-                            width = "100%",
-                            "i_pred_streetN", label = "Street Name",
-                            choices = as.list(sort(inputC$street_name))
-                            #selected = "Road 01"
-                        ) #close streetN input bracket
-                    ), #close 1st column bracket
-                    
-                    
-                    column(5,
+                    column(12, tags$h4(tags$u("Location:"))),
+                
+                    column(4,
                         selectInput(
                             width = "100%",
                             "i_pred_town", label = "Town",
                             choices = as.list(sort(inputC$town))
-                            #selected = "Bedok"
                         ), #close town input bracket
-                        
-                        numericInput(
-                            width = "50%",
-                            "i_pred_block", label = "Block Number",
-                            min=inputC$block[1], 
-                            max = inputC$block[2], 
-                            value= floor(mean(inputC$block)), step = 1
-                        ) #close block input bracket
-                    ), #close 2nd column bracket
+                    ),
                     
                     column(2,
+                           style = "margin-top: 25px;",
                            actionButton("i_pred_mapbut",
                                 width = "100%",
                                 label = "Use Map"
                            ) #close map button input bracket
                     )#close map col
                     
-
-                ), #close location row bracket
+                ), #close town row bracket
                 
                 ############### 2nd row for flat features  
                 
                 fluidRow(
-                    column(12, h3("Flat Features:")),
+                    column(12, tags$h4(tags$u("Flat Features:"))),
                     
                     column(4, 
                            selectInput(
                                width = "100%",
                                "i_pred_flatM", label = "Flat Model",
-                               choices = as.list(sort(inputC$new_flat_model))
-                               #selected = "DBSS"
+                               choices = as.list(sort(inputC$flat_model))
                            ), #close flatM input bracket
                            
+                           br(),
                            selectInput(
                                width = "100%",
                                "i_pred_flatT", label = "Flat Type",
                                choices = as.list(sort(inputC$flat_type))
-                               #selected = "1 Room"
                            ) #close flatT input bracket
                     ), #close 1st column bracket
                     
                     column(4, 
-                           selectInput(
+                           sliderInput(
                                width = "100%",
-                               "i_pred_NoS", label = "Number of Storey",
-                               choices = as.list(sort(inputC$storey_range))
-                               #selected = "01 to 03"
-                           ), #close NoS input bracket
+                               "i_pred_maxF", 
+                               label = "Highest Floor Level",
+                               min = inputC$max_floor_lvl[1],
+                               max = inputC$max_floor_lvl[2], 
+                               value = inputC$max_floor_lvl[2]
+                           ), #close maxF bracket
                            
                            sliderInput(
                                 width = "100%",
@@ -245,26 +233,69 @@ body <- dashboardBody(
                                 label = HTML(paste0("Floor Area (m", tags$sup("2"), ")")),
                                 min = inputC$floor_area_sqm[1],
                                 max = inputC$floor_area_sqm[2], 
-                                value = mean(inputC$floor_area_sqm)
+                                value = floor(mean(inputC$floor_area_sqm))
                             ) #close floor area bracket 
                     ), #close 2nd column bracket
                     
                     column (4,
+                        selectInput(
+                            width = "100%",
+                            "i_pred_SRange", label = "Preferred Range for Storey Level",
+                            choices = as.list(sort(inputC$storey_range))
+                        ), #close SRange input bracket
+                        br(),
                         sliderInput(
                             width = "100%",
                             "i_pred_RLease", label = "Remaining Lease (year)",
                             min = inputC$remaining_lease[1],
                             max = inputC$remaining_lease[2],
-                            value = mean(inputC$remaining_lease)
+                            value = floor(mean(inputC$remaining_lease))
                         ) #close RLease bracket 
-                    )
+                    ) # close 3rd col
                     
-                ),# close 2nd row bracket
+                ),# close flat feature row bracket
+                
+                
+                fluidRow(
+                    
+                    column(12, tags$h4(tags$u("Others:"))),
+                    
+                    column(2,
+                        checkboxInput("i_pred_com", label = "Commercial", value = FALSE)
+                    ),
+                    
+                    column(2,
+                        checkboxInput("i_pred_mh", label = "Market Hawker", value = FALSE)
+                    ),
+                    column(8,
+                        column(4,
+                            checkboxInput("i_pred_carp", label = "Multi Storey Car Park", value = FALSE)
+                        ),
+
+                        column(4,
+                            checkboxInput("i_pred_ppav", label = "Precinct Pavillion", value = FALSE)    
+                        ),
+                        
+                        column(4,
+                            checkboxInput("i_pred_misc", label = "Miscellaneous *", value = FALSE)
+                        )
+                    ),
+                ),
+                fluidRow(column(12, 
+                    "* Other amenities such as ",
+                    "admin office, childcare centre, education centre, ",
+                    "Residents’ Committees centre, etc.",
+                    br(),
+                    "Note: refer to the documentation tab for more information",
+                    "on each attributes")
+                ),
+                br(),
                 
                 ############### last row for button
                 fluidRow(
                     column(12, align="right",
                         actionButton("i_pred_resetbut",
+                            style= "background-color: #808080;",
                             label = "Reset",
                             width = "100px", color = "blue"
                         ), #close reset button input bracket
@@ -273,22 +304,36 @@ body <- dashboardBody(
                             label = "Predict!",
                             width = "100px"
                         ) #close predict button input bracket
-                        
-                       
-                    ) #close predict button column bracket
+                    ) #close button column bracket
                     
-                )# close flat feature row bracket
+                )# close button row bracket
             ),#close flat detail box bracket
             br(),
             
             #################### results box
-            box(title="Results", width = 12, height = 300,
-                collapsible = FALSE,
-                textOutput("o_pred_res")
+            box(title=tags$p("Results", 
+                             style="font-size: 22px; margin-bottom: 0px;"),
+                width = 12, height = 380,
+                solidHeader = TRUE, collapsible = FALSE,
+                status = "warning",
+                
+                tags$h4(textOutput("o_pred_param_title")),
+                tags$u(textOutput("o_pred_param_loc")),
+                textOutput("o_pred_param_town"),
+                br(),
+                tags$u(textOutput("o_pred_param_ff0")),
+                textOutput("o_pred_param_ff1"),
+                textOutput("o_pred_param_ff2"),
+                br(),
+                tags$u(textOutput("o_pred_param_oth0")),
+                textOutput("o_pred_param_oth1"),
+                br(),
+                tags$h4(textOutput("o_pred_res_price0")),
+                tags$h3(textOutput("o_pred_res_price1"),
+                        style="margin-top: 0px; margin-bottom: 0px;")
             ), #close results box bracket
-            #to fix background color
-            br(),
-            "need text to fix background?"
+            
+            tags$p(".", style = "color: #FFFFFF;")
             
         ), #close pred tabItem bracket
         
@@ -298,30 +343,220 @@ body <- dashboardBody(
             if (appdone==FALSE) {constructionbox},
             
             box(title = "Dataset", width = 12,
-                collapsible = FALSE,
-                "The prediction model is trained using the", 
-                tags$a(href="https://data.gov.sg/dataset/resale-flat-prices",
-                       "open dataset", target = "_blank"), 
-                "provided by Singapore Housing and Development Board."
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "The prediction model is trained using the open dataset",
+                "provided by Singapore Housing and Development Board:",
+                br(),
+                br(),
+                
+                tags$ol(
+                    tags$li("Resale Flat Price", 
+                        tags$ul(
+                            tags$li("Source: ",
+                                tags$a(href = "https://data.gov.sg/dataset/resale-flat-prices",
+                                       "https://data.gov.sg/dataset/resale-flat-prices",
+                                       target = "_blank"
+                                )
+                            ),
+                            tags$li("Resale flat transacted prices based on",
+                            "registration date from 2015-2021 are selected",
+                            "in this project.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("HDB Property Information",
+                        tags$ul(
+                            tags$li("Source: ",
+                                tags$a(href = "https://data.gov.sg/dataset/hdb-property-information",
+                                       "https://data.gov.sg/dataset/hdb-property-information",
+                                       target = "_blank"
+                                )
+                            ),
+                            tags$li("The dataset contains the location of",
+                            "existing HDB blocks, highest floor level, ",
+                            "year of completion, type of building and ",
+                            "number of HDB flats (breakdown by flat type) ",
+                            "per block etc.")
+                        )
+                    )
+                    
+                ),
+                
+                "The data were last accessed on (date)"
                 
             ),# close dataset box bracket
             
             box(title = "Data Attributes", width = 12,
-                collapsible = FALSE,
-                "Hello."
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                tags$ol(
+                    
+                    tags$li("Region",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Town",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                        "https://en.wikipedia.org/wiki/List_of_places_in_Singapore",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Flat Model",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html",
+                                        "https://sg.finance.yahoo.com/news/different-types-hdb-houses-call-020000642.html",
+                                       target = "_blank"
+                                ),
+                                "and",
+                                tags$a(href = "https://www.teoalida.com/singapore/hdbfloorplans/",
+                                       "https://www.teoalida.com/singapore/hdbfloorplans/",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Flat Type",
+                        tags$ul(
+                            tags$li("Refer to",
+                                tags$a(href = "https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats",
+                                       "https://www.hdb.gov.sg/residential/buying-a-flat/resale/getting-started/types-of-flats",
+                                       target = "_blank"
+                                ),
+                                "for more information."
+                            )
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Highest Floor Level",
+                        tags$ul(
+                            tags$li("Highest floor level of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Preferred Range for Storey Level",
+                        tags$ul(
+                            tags$li("Preferred range for storey level of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Floor Area (m", tags$sup("2"), ")",
+                        tags$ul(
+                            tags$li("Floor area of the resale flat.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Remaining Lease (Year)",
+                        tags$ul(
+                            tags$li("Remaining lease of the resale flat."),
+                            tags$li("Most of the HDB flats come with a 99-year lease.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Commercial",
+                        tags$ul(
+                            tags$li("Close to commercial property.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Market Hawker",
+                        tags$ul(
+                            tags$li("Close to market and hawker.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Multi Storey Car Park",
+                        tags$ul(
+                            tags$li("Close to multi-storey carpark.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Precinct Pavilion",
+                        tags$ul(
+                            tags$li("Close to precinct pavillion.")
+                        )
+                    ),
+                    br(),
+                    
+                    tags$li("Miscellaneous",
+                        tags$ul(
+                            tags$li("Close to other amenities such as ",
+                            "admin office, childcare centre, education centre, ",
+                            "Residents’ Committees centre, etc.")
+                        )
+                    )
+                
+                )
             ),# close data attr box bracket
             
+            box(title = "Declaration", width = 12,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "This project is conducted to fulfill the academic requirement",
+                "of the course Principal of Data Science (WQD7001). The data is",
+                "used under the license",
+                tags$a(href = "https://data.gov.sg/open-data-licence",
+                       "https://data.gov.sg/open-data-licence",
+                       target = "_blank"
+                ),
+                "."
+            ), #close declaration box
+            
             box(title = "Acknowledgement", width = 12,
-                collapsible = FALSE,
-                "Thank you all"
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "We would like to express our gratitude to our lecturer, ",
+                "Dr Rohana binti Mahmud for allowing us to engage in this ",
+                "project. We would also like to show our appreciation for ",
+                "each and every member of the group as we manage to ",
+                "push through the difficulties and to complete this project. ",
+                "Lastly, we hope that the project will contribute to the users ",
+                "through the visualization and prediction of ",
+                "the current market price of the HDB flat in Singapore."
             ),# close ack box bracket
             
             box(title = "About Us", width = 12,
-                collapsible = FALSE,
-                "We are 5 smart PG students", br(),
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "Master of Data Science", br(),
+                "Amy Lang S2127213", br(),
+                "Ching Peng Liaw S2038321", br(),
+                "Li Tian Yeoh S2120306", br(),
+                "Wei Wen Wong S2121928", br(),
+                "Yong Kok Khuen 17147279", br(),
                 "Github repo here?"
-            )# close ack box bracket
+            ),# close ack box bracket
             
+            tags$p(".", style = "color: #FFFFFF;")
         ), #close doc tabItem bracket
         
         ######################### Todo tab
@@ -332,32 +567,36 @@ body <- dashboardBody(
             fluidRow(
                 
                 column(6,
-                    box(title="Icon choices", width=12,
-                        collapsible = TRUE,
-                        img(src = "icons.png", height = '250px', width = '400px',
-                                 alt = "icon choices"), br(),
-                        tags$a(href="https://getbootstrap.com/docs/3.4/components/#glyphicons",
-                               "Link to full icon list")
-                             
-                    ),#close icon box bracket
-                
-                    box(title="Theme and colors", width=12,
-                        collapsible = TRUE,
-                        "including change bg color for button like 'reset' ",
-                        "in prediction tab"
-                        
-                    )#close theme box bracket
-                ),
-                
-                column(6,
                     box(title = "Others", width=12,
+                        
+                        "General",
                         tags$ul(
-                            tags$li("town lat lng"),
-                            tags$li("reverse geocoding algorithm"),
-                            tags$li("Location availability logic?"),
-                            tags$li("reset button update inputs"),
-                            tags$li("slow problem?")
+                            tags$li("Colorrrrrrrrrr"),
+                            tags$li("Englishhhhhhhh")
+                        ),
+                        
+                        "Visualisation tab:",
+                        tags$ul(
+                            tags$li("nothing?")
+                        ),
+                        
+                        "Prediction tab:",
+                        tags$ul(
+                            tags$li("note and *?"),
+                            tags$li("binary input spacing"),
+                            tags$li("yes/no or Yes/No?"),
+                            tags$li("display param space formatting"),
+                        ),
+                        
+                        "Documentation tab:",
+                        tags$ul(
+                            tags$li("data attr first then only data set?"),
+                            tags$li("last access date"),
+                            tags$li("declaration split and remove?"),
+                            tags$li("about us formatting?"),
+                            tags$li("naming last or first name")
                         )
+                        
                     )
                 )
                 
@@ -371,11 +610,6 @@ body <- dashboardBody(
                 
     ) #close tabItems bracket
 ) #close DBbody bracket
-
-
-
-
-
 
 
 # Shiny UI ----------------------------------------------------------------

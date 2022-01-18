@@ -1,0 +1,247 @@
+---
+title: "Modeling - Decision Tree, Random Forest, Support Vectore Regression"
+output: html_notebook
+---
+
+# Modeling
+
+```{r}
+library(dplyr)
+library(glmnet)
+library(randomForest)
+library(rpart)
+library(rpart.plot)
+library(e1071)
+```
+
+```{r}
+df <- read.csv("../data/data_clean.csv", stringsAsFactors = TRUE)
+df$year <- factor(df$year)
+df$month <- factor(df$month)
+df$block <- factor(df$block)
+```
+
+```{r}
+head(df)
+```
+
+```{r}
+str(df)
+```
+
+```{r}
+colnames(df)
+```
+
+## Train-Test Split
+
+```{r}
+sort(unique(df$year))
+```
+
+```{r}
+train_set <- df %>% filter(year != 2021)
+test_set <- df %>% filter(year == 2021)
+```
+
+```{r}
+head(train_set)
+```
+
+```{r}
+head(test_set)
+```
+
+## Helper Functions
+
+```{r}
+get_metrics <- function(y_actual, y_predict) {
+  mae <- mean(abs(y_actual - y_predict))
+  mse <- mean((y_actual - y_predict)^2)
+  rmse <- sqrt(mse)
+  
+  sse <- sum((y_actual - y_predict)^2)
+  sst <- sum((y_actual - mean(y_actual))^2)
+  rsq <- 1 - (sse / sst)
+  
+  metrics <- data.frame(MAE = mae, MSE = mse, RMSE = rmse, "R-squared" = rsq)
+  return (metrics)
+}
+```
+
+```{r}
+# Helper function to scale floor_area_sqm to z-score
+scale_floor_area_sqm <- function(floor_area_sqm) {
+  mean_floor_area_sqm <- mean(train_set$floor_area_sqm)
+  std_floor_area_sqm <- sd(train_set$floor_area_sqm)
+  z_score <- (floor_area_sqm - mean_floor_area_sqm) / std_floor_area_sqm
+  return (z_score)
+}
+
+# Helper function to scale remaining_lease to z-score
+scale_remaining_lease <- function(remaining_lease) {
+  mean_remaining_lease <- mean(train_set$remaining_lease)
+  std_remaining_lease <- sd(train_set$remaining_lease)
+  z_score <- (remaining_lease - mean_remaining_lease) / std_remaining_lease
+  return (z_score)
+}
+
+# Helper function to scale max_floor_lvl to z-score
+scale_max_floor_lvl <- function(max_floor_lvl) {
+  mean_max_floor_lvl <- mean(train_set$max_floor_lvl)
+  std_max_floor_lvl <- sd(train_set$max_floor_lvl)
+  z_score <- (max_floor_lvl - mean_max_floor_lvl) / std_max_floor_lvl
+  return (z_score)
+}
+```
+
+## Decision Tree Regression
+
+Reference: 
+https://www.guru99.com/r-decision-trees.html
+
+```{r}
+str(train_set)
+
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+
+```
+
+```{r}
+dt_train_set <- train_set %>% select(all_of(selected_columns))
+dt_test_set <- test_set %>% select(all_of(selected_columns))
+```
+
+```{r}
+dt <- rpart(resale_price~., data = dt_train_set, method = "anova")
+```
+
+```{r}
+dt_pred <- predict(dt, newdata = dt_test_set)
+summary(dt_pred)
+str(dt_pred)
+```
+
+```{r}
+dt_metrics <- get_metrics(dt_test_set$resale_price, dt_pred)
+dt_metrics
+```
+
+```{r}
+rpart.plot(dt, extra = 0)
+```
+
+## Random Forest Regression
+
+Reference: 
+https://www.listendata.com/2014/11/random-forest-with-r.html
+
+```{r}
+str(train_set)
+
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+
+```
+
+```{r}
+rf_train_set <- train_set %>% select(all_of(selected_columns))
+rf_test_set <- test_set %>% select(all_of(selected_columns))
+```
+
+```{r}
+rf <- randomForest(resale_price ~., data = rf_train_set, ntree=100)
+print(rf)
+```
+
+```{r}
+
+rf_pred <- predict(rf, newdata = rf_test_set)
+summary(rf_pred)
+str(rf_pred)
+
+summary(rf_test_set)
+str(rf_test_set)
+```
+
+```{r}
+rf_metrics <- get_metrics(rf_test_set$resale_price, rf_pred)
+rf_metrics
+```
+
+```{r}
+plot(rf)
+```
+
+## Support Vector Regression
+
+Reference:
+https://www.svm-tutorial.com/2014/10/support-vector-regression-r/
+
+```{r}
+str(train_set)
+
+all_columns <- colnames(train_set)
+excluded_columns <- c("block", "street_name", "year", "month", "price_per_sqm", "region")
+selected_columns <- all_columns[!all_columns %in% excluded_columns]
+selected_columns
+
+```
+
+```{r}
+svr_train_set <- train_set %>% select(all_of(selected_columns))
+svr_test_set <- test_set %>% select(all_of(selected_columns))
+
+svr_train_set$floor_area_sqm <- scale_floor_area_sqm(svr_train_set$floor_area_sqm)
+svr_test_set$floor_area_sqm <- scale_floor_area_sqm(svr_test_set$floor_area_sqm)
+
+svr_train_set$remaining_lease <- scale_remaining_lease(svr_train_set$remaining_lease)
+svr_test_set$remaining_lease <- scale_remaining_lease(svr_test_set$remaining_lease)
+
+svr_train_set$max_floor_lvl <- scale_max_floor_lvl(svr_train_set$max_floor_lvl)
+svr_test_set$max_floor_lvl <- scale_max_floor_lvl(svr_test_set$max_floor_lvl)
+
+```
+
+```{r}
+# ERROR: cannot allocate vector of size 1.5 Gb
+memory.limit(size=56000)
+svr <- svm(resale_price ~. , svr_train_set, type = "eps-regression")
+```
+
+```{r}
+svr_pred <- predict(svr, newdata = svr_test_set)
+summary(svr_pred)
+str(svr_pred)
+
+summary(svr_test_set$resale_price)
+str(svr_test_set$resale_price)
+```
+
+```{r}
+svr_metrics <- get_metrics(svr_test_set$resale_price, svr_pred)
+svr_metrics
+```
+
+# Model Selection
+
+Compile metrics from all models.
+
+```{r}
+model_names <- c("Decision Tree", "Random Forest", "SVR") # Add other model names here
+all_models <- rbind(dt_metrics, rf_metrics, svr_metrics) # Add other metrics here
+row.names(all_models) <- model_names
+all_models
+```
+
+Choose the model with highest R-squared value.
+
+```{r}
+all_models %>% filter(R.squared == max(R.squared))
+```
+
