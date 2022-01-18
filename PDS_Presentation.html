@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="" xml:lang="">
+  <head>
+    <title>Singapore Flat Resale Price Prediction Model - A Data Science Approach</title>
+    <meta charset="utf-8" />
+    <meta name="author" content="Amy, Jasmine, Kok Khuen, Li Tian, Wei Wen" />
+    <script src="libs/header-attrs/header-attrs.js"></script>
+    <link href="libs/remark-css/default.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis.css" rel="stylesheet" />
+    <link href="libs/remark-css/metropolis-fonts.css" rel="stylesheet" />
+  </head>
+  <body>
+    <textarea id="source">
+class: center, middle, inverse, title-slide
+
+# Singapore Flat Resale Price Prediction Model - A Data Science Approach
+## WQD7001 Principles of Data Science Group Project
+### Amy, Jasmine, Kok Khuen, Li Tian, Wei Wen
+### Universiti Malaya
+### 2022/1/18
+
+---
+
+
+
+
+
+
+
+# Background and Objectives
+
+__Problem Statement__
+1. What are the factors affecting SG flat resale price?
+2. What are the prices of SG flat available for sale according to historical transacted data with the selected different features?
+3. What are the statistical relationship between the influencing factors and resale price?
+
+
+__Domain: Property__
+
+Motivation &amp; Objectives:
+- To empower investors with __data-driven approach__ in property selection process for maximal return on investment
+- To enable people in buying their home with __proper budget planning__ and affordability
+
+
+__Data Source: Singapore Housing and Development Board__
+
+---
+# Visualization of Trend and HeatMap
+
+This visualization part answer Q1, which is "What are the factors affecting SG flat resale price?"
+
+![alt text here](Visualization_HeatMap.PNG)
+
+![alt text here](Visualization_Trend.png)
+
+
+---
+
+# Prediction Visualized
+
+This visualization answers Q2, which is "What are the prices of SG flat available for sale according to historical transacted data with the selected different features?"
+
+.pull-left[
+
+__Investors or house buyers can screen through criteria such as__
+- Region
+- Presence of commercial centers 
+- Features of the proeprty itself
+
+![alt text here](Prediction1.PNG)
+
+
+]
+
+.pull-right[
+
+__The prediction results shall display predicted current price__
+
+
+![alt text here](Prediction2.PNG)
+
+]
+
+---
+
+# Comparison between ML Predictive Models
+
+We have came out with a list of predictive models, 
+
+| Predictive Models     | Accuracy      | 
+| ----------------------|:-------------:|
+| SVM                   |               | 
+| Random Forest         |               |   
+| Regression            |               |    
+
+---
+
+# Correlation Analytics of Features
+This analysis answers Q3, which is "What are the statistical relationship between the influencing factors and resale price?"
+
+
+```
+##                 Df    Sum Sq   Mean Sq F value Pr(&gt;F)    
+## street_name    555 1.726e+15 3.109e+12   251.4 &lt;2e-16 ***
+## Residuals   151899 1.879e+15 1.237e+10                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```
+##                 Df    Sum Sq   Mean Sq F value Pr(&gt;F)    
+## flat_type        6 1.490e+15 2.483e+14   17903 &lt;2e-16 ***
+## Residuals   152448 2.115e+15 1.387e+10                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```
+##                  Df    Sum Sq   Mean Sq F value Pr(&gt;F)    
+## storey_range     16 5.709e+14 3.568e+13    1793 &lt;2e-16 ***
+## Residuals    152438 3.034e+15 1.990e+10                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```
+##                 Df    Sum Sq   Mean Sq F value Pr(&gt;F)    
+## flat_model      19 1.226e+15 6.452e+13    4135 &lt;2e-16 ***
+## Residuals   152435 2.379e+15 1.560e+10                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```
+##                 Df    Sum Sq   Mean Sq F value Pr(&gt;F)    
+## region           4 3.545e+14 8.862e+13    4157 &lt;2e-16 ***
+## Residuals   152450 3.250e+15 2.132e+10                   
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+
+```
+## Loading required package: carData
+```
+
+```
+## Anova Table (Type III tests)
+## 
+## Response: resale_price
+##                 Sum Sq     Df F value    Pr(&gt;F)    
+## (Intercept) 1.8670e+12      1   138.4 &lt; 2.2e-16 ***
+## region      3.2232e+14      4  5973.2 &lt; 2.2e-16 ***
+## flat_model  1.1937e+15     19  4657.3 &lt; 2.2e-16 ***
+## Residuals   2.0563e+15 152431                      
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+```
+__The ANOVA and ANCOVA result serve to inform on whether are there significant mean difference between variables of__
+- flat type
+- flat model
+- storey range
+- street name
+- region
+
+This will give us better confidence and decision-making during dropping/grouping these variable data.
+
+As denoted by the *** symbol on the Pr(&gt;F) column, there __is significant mean difference for all variables.__
+---
+
+
+
+# Open for Q&amp;A and more!
+
+- [_"Check your predicted SG property price here}"_: SG Flat Resale Price Predictor](https://ltyeoh.shinyapps.io/sg_flat_resale_price/)
+
+- [_"Our GitHUB repo here}"_: GITHUB](https://github.com/yongkokkhuen/pds-group-project)
+
+.center[
+  ![alt text here](Team.PNG)
+]
+
+
+
+    </textarea>
+<style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
+<script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
+<script>var slideshow = remark.create({
+"highlightStyle": "arta",
+"highlightLines": true,
+"countIncrementalSlides": false
+});
+if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
+  window.dispatchEvent(new Event('resize'));
+});
+(function(d) {
+  var s = d.createElement("style"), r = d.querySelector(".remark-slide-scaler");
+  if (!r) return;
+  s.type = "text/css"; s.innerHTML = "@page {size: " + r.style.width + " " + r.style.height +"; }";
+  d.head.appendChild(s);
+})(document);
+
+(function(d) {
+  var el = d.getElementsByClassName("remark-slides-area");
+  if (!el) return;
+  var slide, slides = slideshow.getSlides(), els = el[0].children;
+  for (var i = 1; i < slides.length; i++) {
+    slide = slides[i];
+    if (slide.properties.continued === "true" || slide.properties.count === "false") {
+      els[i - 1].className += ' has-continuation';
+    }
+  }
+  var s = d.createElement("style");
+  s.type = "text/css"; s.innerHTML = "@media print { .has-continuation { display: none; } }";
+  d.head.appendChild(s);
+})(document);
+// delete the temporary CSS (for displaying all slides initially) when the user
+// starts to view slides
+(function() {
+  var deleted = false;
+  slideshow.on('beforeShowSlide', function(slide) {
+    if (deleted) return;
+    var sheets = document.styleSheets, node;
+    for (var i = 0; i < sheets.length; i++) {
+      node = sheets[i].ownerNode;
+      if (node.dataset["target"] !== "print-only") continue;
+      node.parentNode.removeChild(node);
+    }
+    deleted = true;
+  });
+})();
+(function() {
+  "use strict"
+  // Replace <script> tags in slides area to make them executable
+  var scripts = document.querySelectorAll(
+    '.remark-slides-area .remark-slide-container script'
+  );
+  if (!scripts.length) return;
+  for (var i = 0; i < scripts.length; i++) {
+    var s = document.createElement('script');
+    var code = document.createTextNode(scripts[i].textContent);
+    s.appendChild(code);
+    var scriptAttrs = scripts[i].attributes;
+    for (var j = 0; j < scriptAttrs.length; j++) {
+      s.setAttribute(scriptAttrs[j].name, scriptAttrs[j].value);
+    }
+    scripts[i].parentElement.replaceChild(s, scripts[i]);
+  }
+})();
+(function() {
+  var links = document.getElementsByTagName('a');
+  for (var i = 0; i < links.length; i++) {
+    if (/^(https?:)?\/\//.test(links[i].getAttribute('href'))) {
+      links[i].target = '_blank';
+    }
+  }
+})();
+// adds .remark-code-has-line-highlighted class to <pre> parent elements
+// of code chunks containing highlighted lines with class .remark-code-line-highlighted
+(function(d) {
+  const hlines = d.querySelectorAll('.remark-code-line-highlighted');
+  const preParents = [];
+  const findPreParent = function(line, p = 0) {
+    if (p > 1) return null; // traverse up no further than grandparent
+    const el = line.parentElement;
+    return el.tagName === "PRE" ? el : findPreParent(el, ++p);
+  };
+
+  for (let line of hlines) {
+    let pre = findPreParent(line);
+    if (pre && !preParents.includes(pre)) preParents.push(pre);
+  }
+  preParents.forEach(p => p.classList.add("remark-code-has-line-highlighted"));
+})(document);</script>
+
+<script>
+slideshow._releaseMath = function(el) {
+  var i, text, code, codes = el.getElementsByTagName('code');
+  for (i = 0; i < codes.length;) {
+    code = codes[i];
+    if (code.parentNode.tagName !== 'PRE' && code.childElementCount === 0) {
+      text = code.textContent;
+      if (/^\\\((.|\s)+\\\)$/.test(text) || /^\\\[(.|\s)+\\\]$/.test(text) ||
+          /^\$\$(.|\s)+\$\$$/.test(text) ||
+          /^\\begin\{([^}]+)\}(.|\s)+\\end\{[^}]+\}$/.test(text)) {
+        code.outerHTML = code.innerHTML;  // remove <code></code>
+        continue;
+      }
+    }
+    i++;
+  }
+};
+slideshow._releaseMath(document);
+</script>
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+(function () {
+  var script = document.createElement('script');
+  script.type = 'text/javascript';
+  script.src  = 'https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-MML-AM_CHTML';
+  if (location.protocol !== 'file:' && /^https?:/.test(script.src))
+    script.src  = script.src.replace(/^https?:/, '');
+  document.getElementsByTagName('head')[0].appendChild(script);
+})();
+</script>
+  </body>
+</html>

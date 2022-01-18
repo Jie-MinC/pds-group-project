@@ -1,0 +1,139 @@
+---
+title: "Singapore Flat Resale Price Prediction Model - A Data Science Approach"
+subtitle: "WQD7001 Principles of Data Science Group Project"
+author: "Amy, Jasmine, Kok Khuen, Li Tian, Wei Wen"
+institute: "Universiti Malaya"
+date: "2022/1/18"
+output:
+  xaringan::moon_reader:
+    css: [default, metropolis, metropolis-fonts]
+    lib_dir: libs
+    nature:
+      highlightStyle: arta
+      highlightLines: true
+      countIncrementalSlides: false
+---
+
+
+
+```{r setup, include=FALSE}
+options(
+  htmltools.dir.version  = FALSE,
+  htmltools.preserve.raw = FALSE # needed for windows
+)
+```
+
+
+# Background and Objectives
+
+__Problem Statement__
+1. What are the factors affecting SG flat resale price?
+2. What are the prices of SG flat available for sale according to historical transacted data with the selected different features?
+3. What are the statistical relationship between the influencing factors and resale price?
+
+
+__Domain: Property__
+
+Motivation & Objectives:
+- To empower investors with __data-driven approach__ in property selection process for maximal return on investment
+- To enable people in buying their home with __proper budget planning__ and affordability
+
+
+__Data Source: Singapore Housing and Development Board__
+
+---
+# Visualization of Trend and HeatMap
+
+This visualization part answer Q1, which is "What are the factors affecting SG flat resale price?"
+
+![alt text here](Visualization_HeatMap.PNG)
+
+![alt text here](Visualization_Trend.png)
+
+
+---
+
+# Prediction Visualized
+
+This visualization answers Q2, which is "What are the prices of SG flat available for sale according to historical transacted data with the selected different features?"
+
+.pull-left[
+
+__Investors or house buyers can screen through criteria such as__
+- Region
+- Presence of commercial centers 
+- Features of the proeprty itself
+
+![alt text here](Prediction1.PNG)
+
+
+]
+
+.pull-right[
+
+__The prediction results shall display predicted current price__
+
+
+![alt text here](Prediction2.PNG)
+
+]
+
+---
+
+# Comparison between ML Predictive Models
+
+We have came out with a list of predictive models, 
+
+| Predictive Models     | Accuracy      | 
+| ----------------------|:-------------:|
+| SVM                   |               | 
+| Random Forest         |               |   
+| Regression            |               |    
+
+---
+
+# Correlation Analytics of Features
+This analysis answers Q3, which is "What are the statistical relationship between the influencing factors and resale price?"
+
+``` {r,echo=F}
+sgpropertydata = read.csv("C:\\Users\\Wei Wen\\OneDrive - Universiti Malaya\\Documents\\data_clean.csv")
+street.aov <- aov(resale_price ~ street_name, data = sgpropertydata)
+summary(street.aov)
+flattype.aov <- aov(resale_price ~ flat_type, data = sgpropertydata)
+summary(flattype.aov)
+storey.aov <- aov(resale_price ~ storey_range, data = sgpropertydata)
+summary(storey.aov)
+flatmodel.aov <- aov(resale_price ~ flat_model, data = sgpropertydata)
+summary(flatmodel.aov)
+region.aov <- aov(resale_price ~ region, data = sgpropertydata)
+summary(region.aov)
+library(car)
+ancova_model <- aov(resale_price ~ region + flat_model, data = sgpropertydata)
+Anova(ancova_model, type="III")
+```
+__The ANOVA and ANCOVA result serve to inform on whether are there significant mean difference between variables of__
+- flat type
+- flat model
+- storey range
+- street name
+- region
+
+This will give us better confidence and decision-making during dropping/grouping these variable data.
+
+As denoted by the *** symbol on the Pr(>F) column, there __is significant mean difference for all variables.__
+---
+
+
+
+# Open for Q&A and more!
+
+- [_"Check your predicted SG property price here"_: SG Flat Resale Price Predictor](https://ltyeoh.shinyapps.io/sg_flat_resale_price/)
+
+- [_"Our GitHUB repo here"_: GITHUB](https://github.com/yongkokkhuen/pds-group-project)
+
+.center[
+  ![alt text here](Team.PNG)
+]
+
+
+
