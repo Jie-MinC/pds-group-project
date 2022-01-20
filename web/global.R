@@ -61,5 +61,5 @@ geodist<- function(lat1, lng1, lat2, lng2){
 
 # convert 1/0 to yes no
 convertYN<- function(num){
-  return(ifelse(num==1,"yes","no"))
+  return(ifelse(num==1,"Yes","No"))
 }

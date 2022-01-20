@@ -24,9 +24,9 @@ constructionbox<-box(
 
 # Header ------------------------------------------------------------------
 header <- dashboardHeader( 
-    titleWidth = 300,
+    #titleWidth = 250,
     
-    title = "Singapore Flat Resale Price"
+    title = "Flatly"
 ) #close DBheader bracket
 
 
@@ -287,7 +287,7 @@ body <- dashboardBody(
                     "Residents’ Committees centre, etc.",
                     br(),
                     "Note: refer to the documentation tab for more information",
-                    "on each attributes")
+                    "on each attributes.")
                 ),
                 br(),
                 
@@ -341,52 +341,6 @@ body <- dashboardBody(
         tabItem(
             "tab_doc",
             if (appdone==FALSE) {constructionbox},
-            
-            box(title = "Dataset", width = 12,
-                collapsible = FALSE, solidHeader = TRUE,
-                status = "warning",
-                "The prediction model is trained using the open dataset",
-                "provided by Singapore Housing and Development Board:",
-                br(),
-                br(),
-                
-                tags$ol(
-                    tags$li("Resale Flat Price", 
-                        tags$ul(
-                            tags$li("Source: ",
-                                tags$a(href = "https://data.gov.sg/dataset/resale-flat-prices",
-                                       "https://data.gov.sg/dataset/resale-flat-prices",
-                                       target = "_blank"
-                                )
-                            ),
-                            tags$li("Resale flat transacted prices based on",
-                            "registration date from 2015-2021 are selected",
-                            "in this project.")
-                        )
-                    ),
-                    br(),
-                    
-                    tags$li("HDB Property Information",
-                        tags$ul(
-                            tags$li("Source: ",
-                                tags$a(href = "https://data.gov.sg/dataset/hdb-property-information",
-                                       "https://data.gov.sg/dataset/hdb-property-information",
-                                       target = "_blank"
-                                )
-                            ),
-                            tags$li("The dataset contains the location of",
-                            "existing HDB blocks, highest floor level, ",
-                            "year of completion, type of building and ",
-                            "number of HDB flats (breakdown by flat type) ",
-                            "per block etc.")
-                        )
-                    )
-                    
-                ),
-                
-                "The data were last accessed on (date)"
-                
-            ),# close dataset box bracket
             
             box(title = "Data Attributes", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
@@ -464,7 +418,8 @@ body <- dashboardBody(
                     ),
                     br(),
                     
-                    tags$li("Floor Area (m", tags$sup("2"), ")",
+                    tags$li(
+                        HTML(paste("Floor Area (m", tags$sup("2"), ")", sep = "")),
                         tags$ul(
                             tags$li("Floor area of the resale flat.")
                         )
@@ -518,22 +473,63 @@ body <- dashboardBody(
                 )
             ),# close data attr box bracket
             
-            box(title = "Declaration", width = 12,
+            box(title = "Dataset", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
-                "This project is conducted to fulfill the academic requirement",
-                "of the course Principal of Data Science (WQD7001). The data is",
+                "The prediction model is trained using the open dataset",
+                "provided by Singapore Housing and Development Board:",
+                br(),
+                br(),
+                
+                tags$ol(
+                    tags$li("Resale Flat Price", 
+                            tags$ul(
+                                tags$li("Source: ",
+                                        tags$a(href = "https://data.gov.sg/dataset/resale-flat-prices",
+                                               "https://data.gov.sg/dataset/resale-flat-prices",
+                                               target = "_blank"
+                                        )
+                                ),
+                                tags$li("Resale flat transacted prices based on",
+                                        "registration date from 2015-2021 are selected",
+                                        "in this project.")
+                            )
+                    ),
+                    br(),
+                    
+                    tags$li("HDB Property Information",
+                            tags$ul(
+                                tags$li("Source: ",
+                                        tags$a(href = "https://data.gov.sg/dataset/hdb-property-information",
+                                               "https://data.gov.sg/dataset/hdb-property-information",
+                                               target = "_blank"
+                                        )
+                                ),
+                                tags$li("The dataset contains the location of",
+                                        "existing HDB blocks, highest floor level, ",
+                                        "year of completion, type of building and ",
+                                        "number of HDB flats (breakdown by flat type) ",
+                                        "per block etc.")
+                            )
+                    )
+                    
+                ),
+                
+                "The data were last accessed on 17 Dec 2021, and is ",
                 "used under the license",
                 tags$a(href = "https://data.gov.sg/open-data-licence",
                        "https://data.gov.sg/open-data-licence",
                        target = "_blank"
                 ),
                 "."
-            ), #close declaration box
+                
+            ),# close dataset box bracket
             
             box(title = "Acknowledgement", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
+                "This project is conducted to fulfill the academic requirement",
+                "of the course Principal of Data Science (WQD7001). ",
                 "We would like to express our gratitude to our lecturer, ",
                 "Dr Rohana binti Mahmud for allowing us to engage in this ",
                 "project. We would also like to show our appreciation for ",
@@ -547,14 +543,55 @@ body <- dashboardBody(
             box(title = "About Us", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
-                "Master of Data Science", br(),
-                "Amy Lang S2127213", br(),
-                "Ching Peng Liaw S2038321", br(),
-                "Li Tian Yeoh S2120306", br(),
-                "Wei Wen Wong S2121928", br(),
-                "Yong Kok Khuen 17147279", br(),
-                "Github repo here?"
-            ),# close ack box bracket
+                "We are a group of 5 students in the Master of Data Science ", 
+                "program in the University of Malaya.",
+                br(), br(),
+                "Members:", br(),
+                tags$ol(
+                    tags$li("Amy Lang (S2127213)"),
+                    tags$li("Liaw Ching Peng (S2038321)"),
+                    tags$li("Wong Wei Wen (S2121928)"),
+                    tags$li("Yeoh Li Tian (S2120306)"),
+                    tags$li("Yong Kok Khuen (17147279)")
+                ),
+                "The GitHub repository for this project can be found here:",
+                tags$a(
+                    href = "https://github.com/yongkokkhuen/pds-group-project",
+                    "https://github.com/yongkokkhuen/pds-group-project",
+                    target = "_blank"
+                )
+            ),# close about us box bracket
+            
+            box(title = "Lesson Learnt", width = 12,
+                collapsible = FALSE, solidHeader = TRUE,
+                status = "warning",
+                "Throughout the whole project, we have all learnt precious experience:", 
+                br(), br(),
+                tags$p(
+                    "Amy Lang: "
+                ),
+                
+                tags$p(
+                    "Liaw Ching Peng: "    
+                ),
+                
+                tags$p(
+                    "Wong Wei Wen: "
+                ),
+                tags$p(
+                    "Yeoh Li Tian: I now apprepriate more on the concept of 'less is more'. ",
+                    "A simple UI without fancy color (*cough* such as red) reduces unnecessary distraction",
+                    "and helps the users to focus more on the content itself."
+                ),
+                tags$p(
+                    "Yong Kok Khuen: In order to represent the properties in a more meaningful ",
+                    "way, we merged another dataset that contains the property information so ",
+                    "that we can use these features in our modeling to produce better results, ",
+                    "and deliver a more intuitive user experience."
+                )
+                
+                
+            ), #close declaration box
             
             tags$p(".", style = "color: #FFFFFF;")
         ), #close doc tabItem bracket
@@ -569,34 +606,10 @@ body <- dashboardBody(
                 column(6,
                     box(title = "Others", width=12,
                         
-                        "General",
-                        tags$ul(
-                            tags$li("Colorrrrrrrrrr"),
-                            tags$li("Englishhhhhhhh")
-                        ),
-                        
-                        "Visualisation tab:",
-                        tags$ul(
-                            tags$li("nothing?")
-                        ),
-                        
-                        "Prediction tab:",
-                        tags$ul(
-                            tags$li("note and *?"),
-                            tags$li("binary input spacing"),
-                            tags$li("yes/no or Yes/No?"),
-                            tags$li("display param space formatting"),
-                        ),
-                        
                         "Documentation tab:",
                         tags$ul(
-                            tags$li("data attr first then only data set?"),
-                            tags$li("last access date"),
-                            tags$li("declaration split and remove?"),
-                            tags$li("about us formatting?"),
-                            tags$li("naming last or first name")
+                            tags$li("Lesson Learnt")
                         )
-                        
                     )
                 )
                 

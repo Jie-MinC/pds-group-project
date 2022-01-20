@@ -155,7 +155,7 @@ shinyServer(function(input, output, session) {
         SPplot<- splotdf %>%
             ggplot(aes_string(x = "RP_in_k", y = "floor_area_sqm", 
                               color = input$i_vis_splot_z)) + 
-            geom_point(alpha=0.1) + theme_bw() +
+            geom_point(alpha=0.5) + theme_bw() +
             scale_color_hue() +
             ggtitle("HDB Resale Price in Singapore by Floor Area (sqm)",
                     subtitle = SPplotsubT) +
@@ -285,9 +285,9 @@ shinyServer(function(input, output, session) {
         output$o_pred_param_oth1<-renderText({
             paste( "Commercial: ", convertYN(commercial), ",   ",
                    "Market Hawker: ", convertYN(market_hawker), ",   ",
-                   "Miscellaneous: ", convertYN(miscellaneous), ",   ",
                    "Multi Storey Car Park: ", convertYN(multistorey_carpark), ",   ",
                    "Precinct Pavillion: ", convertYN(precinct_pavilion), ".",
+                   "Miscellaneous: ", convertYN(miscellaneous), ",   ",
                    sep = "")
         })
         
