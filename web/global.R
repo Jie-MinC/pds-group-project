@@ -10,7 +10,7 @@ library(lubridate)
 
 # For UI use --------------------------------------------------------------
 
-appdone<- FALSE
+appdone<- TRUE
 
 #load flat feature choices
 load(file = "www/inputC.RData")

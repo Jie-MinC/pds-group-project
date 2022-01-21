@@ -44,9 +44,6 @@ sidebar <- dashboardSidebar(
         
         menuItem("Documentation", tabName="tab_doc",
                  icon = icon("file", lib="glyphicon")
-        ),
-        
-        menuItem("Todo", tabName="tab_todo"
         )
         
     ) #close sidebarMenu bracket
@@ -73,7 +70,7 @@ body <- dashboardBody(
             
             ########### Plottings
             tabBox(
-                height = 450, width = 12,
+                height = 430, width = 12,
                 selected = "Trend",
                 
                 tabPanel("Trend", 
@@ -150,10 +147,10 @@ body <- dashboardBody(
                             plotOutput("o_vis_splot")
                         ) #close plot column
                     )# close fluidR bracket          
-                )# close scatter plot bracket
+                ),# close scatter plot bracket
                 
             ), #close plotting tabbox bracket
-            
+
             tags$p(".", style = "color: #FFFFFF;")
 
         ), #close vis tabItem bracket
@@ -562,25 +559,39 @@ body <- dashboardBody(
                 )
             ),# close about us box bracket
             
-            box(title = "Lesson Learnt", width = 12,
+            box(title = "Lesson and Experience Learnt", width = 12,
                 collapsible = FALSE, solidHeader = TRUE,
                 status = "warning",
                 "Throughout the whole project, we have all learnt precious experience:", 
                 br(), br(),
                 tags$p(
-                    "Amy Lang: "
+                    "Amy Lang: I have experienced many different functionalities of R ",
+                    "in this project that I have yet to discover before. Utilizing GitHub ",
+                    "to a certain extent also brings in a new perspective on ",
+                    "the version control and teamwork experience."
                 ),
                 
                 tags$p(
-                    "Liaw Ching Peng: "    
+                    "Liaw Ching Peng: This project helped us to understand the full cycle ",
+                    "of data science project thoroughly and improve our R programming skill ",
+                    "as well with all the hands-on experience. The toughest part was ",
+                    "the creation of random forest model which I have spent a couple of days ",
+                    "to train the model with different features and number of trees, ",
+                    "it was extremely time consuming. Nevertheless, the experience ",
+                    "in this project is valuable and strengthened my skill set to ",
+                    "deal with future data science project."    
                 ),
                 
                 tags$p(
-                    "Wong Wei Wen: "
+                    "Wong Wei Wen: This project helped to enhance R programming understanding ",
+                    "and hands on practice. For reasonable feature selection purposes, ",
+                    "doing due diligence statistical analysis on the dataset features ",
+                    "are helpful and I have also learned tremendously on ",
+                    "the side of modelling technique in terms of regressions."
                 ),
                 tags$p(
                     "Yeoh Li Tian: I now apprepriate more on the concept of 'less is more'. ",
-                    "A simple UI without fancy color (*cough* such as red) reduces unnecessary distraction",
+                    "A simple UI with less fancy design and color reduces unnecessary distraction",
                     "and helps the users to focus more on the content itself."
                 ),
                 tags$p(
@@ -594,32 +605,8 @@ body <- dashboardBody(
             ), #close declaration box
             
             tags$p(".", style = "color: #FFFFFF;")
-        ), #close doc tabItem bracket
-        
-        ######################### Todo tab
-        tabItem(
-            "tab_todo", 
-            if (appdone==FALSE) {constructionbox},
-            
-            fluidRow(
-                
-                column(6,
-                    box(title = "Others", width=12,
-                        
-                        "Documentation tab:",
-                        tags$ul(
-                            tags$li("Lesson Learnt")
-                        )
-                    )
-                )
-                
-            
-            )# close fluidrow bracket
-            
-        )#close todo tabItem bracket
+        ) #close doc tabItem bracket
 
-        
-        
                 
     ) #close tabItems bracket
 ) #close DBbody bracket
