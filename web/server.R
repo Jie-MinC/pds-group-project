@@ -286,8 +286,8 @@ shinyServer(function(input, output, session) {
             paste( "Commercial: ", convertYN(commercial), ",   ",
                    "Market Hawker: ", convertYN(market_hawker), ",   ",
                    "Multi Storey Car Park: ", convertYN(multistorey_carpark), ",   ",
-                   "Precinct Pavillion: ", convertYN(precinct_pavilion), ".",
-                   "Miscellaneous: ", convertYN(miscellaneous), ",   ",
+                   "Precinct Pavillion: ", convertYN(precinct_pavilion), ",   ",
+                   "Miscellaneous: ", convertYN(miscellaneous), ".",
                    sep = "")
         })
         

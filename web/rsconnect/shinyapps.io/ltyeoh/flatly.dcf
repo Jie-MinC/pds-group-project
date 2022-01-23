@@ -5,9 +5,9 @@ account: ltyeoh
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 5476062
-bundleId: 5491946
+bundleId: 5498899
 url: https://ltyeoh.shinyapps.io/flatly/
-when: 1642747886.72714
-lastSyncTime: 1642747886.72714
+when: 1642950756.1689
+lastSyncTime: 1642950756.1689
 asMultiple: FALSE
 asStatic: FALSE
